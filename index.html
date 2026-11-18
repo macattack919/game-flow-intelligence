@@ -106,7 +106,7 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function record(team){return team.records?.find(r=>r.name==='overall')?.summary||''}
 function scoreFlowChart(g){
   const clockToSeconds=clock=>{
-    const match=String(clock||'').trim().match(/^(\\d+):(\\d{1,2})$/);
+    const match=String(clock||'').trim().match(/^(\d+):(\d{1,2})$/);
     if(!match)return null;
     const minutes=Number(match[1]),seconds=Number(match[2]);
     return seconds<=59?minutes*60+seconds:null;
@@ -172,7 +172,7 @@ function scoreFlowChart(g){
   </div>`;
 }
 function card(g){
-  const state=statusOf(g),flow=recentFlow(g),model=g.totalProjection||null;
+  const state=statusOf(g),model=g.totalProjection||null;
   const projectedTotal=model?.total!==null&&model?.total!==undefined&&Number.isFinite(Number(model.total))?Number(model.total):null;
   const projectedMargin=model?.projectedHomeMargin!==null&&model?.projectedHomeMargin!==undefined&&Number.isFinite(Number(model.projectedHomeMargin))?Number(model.projectedHomeMargin):null;
   const marginText=projectedMargin===null?'—':Math.abs(projectedMargin)<0.05?'Even':projectedMargin>0?`${g.home.name} by ${Math.abs(projectedMargin).toFixed(1)}`:`${g.away.name} by ${Math.abs(projectedMargin).toFixed(1)}`;
