@@ -1,10 +1,7 @@
-import { projectLiveTotal } from "./total-model.js";
-
 const LEAGUES = {
   nba: {
     label: "NBA",
     sitePath: "nba",
-    corePath: "nba",
     regulationPeriods: 4,
     periodLengthSeconds: 12 * 60,
     groups: null
@@ -12,7 +9,6 @@ const LEAGUES = {
   ncaa: {
     label: "NCAA Men's",
     sitePath: "mens-college-basketball",
-    corePath: "mens-college-basketball",
     regulationPeriods: 2,
     periodLengthSeconds: 20 * 60,
     groups: "50"
@@ -28,134 +24,13 @@ export default async function handler(req, res) {
   }
 
   const SITE_BASE = `https://site.api.espn.com/apis/site/v2/sports/basketball/${league.sitePath}`;
-  const CORE_BASE = `https://sports.core.api.espn.com/v2/sports/basketball/leagues/${league.corePath}`;
 
   async function getJson(url) {
-    const response = await fetch(url, { headers: { Accept: "application/json" } });
+    const response = await fetch(url, {
+      headers: { Accept: "application/json", "Cache-Control": "no-cache" }
+    });
     if (!response.ok) throw new Error(`ESPN request failed (${response.status})`);
     return response.json();
-  }
-
-  function numberOrNull(value) {
-    if (value === null || value === undefined || value === "") return null;
-    const n = Number(value);
-    return Number.isFinite(n) ? n : null;
-  }
-
-  function mapPlay(play) {
-    return {
-      sequence: numberOrNull(play.sequenceNumber ?? play.sequence),
-      period: numberOrNull(play.period?.number) || 0,
-      clock: play.clock?.displayValue || "",
-      homeScore: numberOrNull(play.homeScore),
-      awayScore: numberOrNull(play.awayScore),
-      teamId: play.team?.id || null,
-      teamName: play.team?.displayName || null,
-      scoringPlay: !!play.scoringPlay,
-      points: numberOrNull(play.scoreValue),
-      type: play.type?.text || play.type?.name || null,
-      description: play.text || ""
-    };
-  }
-
-  async function getGameDetails(event) {
-    const id = encodeURIComponent(event.id);
-    const summaryUrl = `${SITE_BASE}/summary?event=${id}`;
-    const situationUrl = `${CORE_BASE}/events/${id}/competitions/${id}/situation?lang=en&region=us`;
-    const [summaryResult, situationResult] = await Promise.allSettled([
-      getJson(summaryUrl),
-      getJson(situationUrl)
-    ]);
-    return {
-      summary: summaryResult.status === "fulfilled" ? summaryResult.value : null,
-      situation: situationResult.status === "fulfilled" ? situationResult.value : null
-    };
-  }
-
-  async function mapWithConcurrency(items, concurrency, mapper) {
-    const output = new Array(items.length);
-    let next = 0;
-    async function worker() {
-      while (true) {
-        const index = next++;
-        if (index >= items.length) return;
-        try { output[index] = await mapper(items[index], index); }
-        catch { output[index] = null; }
-      }
-    }
-    await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));
-    return output;
-  }
-
-  function getTeamStats(summary, teamId) {
-    const teams = summary?.boxscore?.teams || [];
-    const team = teams.find(item => String(item.team?.id) === String(teamId));
-    if (!team) return {};
-    const stats = {};
-    (team.statistics || []).forEach(stat => {
-      const value = stat.displayValue ?? stat.value ?? null;
-      const keys = [stat.name, stat.label, stat.abbreviation, stat.displayName].filter(Boolean);
-      keys.forEach(rawKey => {
-        const key = String(rawKey).toLowerCase();
-        stats[key] = value;
-      });
-    });
-    return stats;
-  }
-
-  function mapGame(event, details) {
-    const competition = event.competitions?.[0];
-    const competitors = competition?.competitors || [];
-    const home = competitors.find(team => team.homeAway === "home");
-    const away = competitors.find(team => team.homeAway === "away");
-    const summary = details?.summary || null;
-    const plays = (summary?.plays || []).map(mapPlay);
-    const homeScore = Number(home?.score || 0);
-    const awayScore = Number(away?.score || 0);
-
-    const team = item => ({
-      id: item?.team?.id || null,
-      name: item?.team?.displayName || "Team",
-      abbreviation: item?.team?.abbreviation || "",
-      score: Number(item?.score || 0),
-      color: item?.team?.color || null,
-      alternateColor: item?.team?.alternateColor || null,
-      records: item?.records || [],
-      stats: getTeamStats(summary, item?.team?.id)
-    });
-
-    const homeTeam = team(home);
-    const awayTeam = team(away);
-    const totalProjection = projectLiveTotal({
-      league: leagueKey,
-      state: event.status?.type?.state || "",
-      period: event.status?.period || 0,
-      clock: event.status?.displayClock || "",
-      periodLengthSeconds: league.periodLengthSeconds,
-      regulationPeriods: league.regulationPeriods,
-      home: homeTeam,
-      away: awayTeam
-    });
-
-    return {
-      id: event.id,
-      name: event.name,
-      shortName: event.shortName || event.name,
-      date: event.date,
-      status: event.status?.type?.description || "",
-      state: event.status?.type?.state || "",
-      period: event.status?.period || 0,
-      clock: event.status?.displayClock || "",
-      periodLengthSeconds: league.periodLengthSeconds,
-      regulationPeriods: league.regulationPeriods,
-      home: homeTeam,
-      away: awayTeam,
-      totalProjection,
-      scoringEvents: plays.filter(play => play.scoringPlay).slice(-120),
-      playEvents: plays.slice(-300),
-      statsAvailable: !!summary,
-      situationAvailable: !!details?.situation
-    };
   }
 
   function easternDateYYYYMMDD() {
@@ -169,20 +44,48 @@ export default async function handler(req, res) {
 
   try {
     const requestedDate = String(req.query?.date || easternDateYYYYMMDD()).replace(/[^0-9]/g, "");
-    if (!/^\d{8}$/.test(requestedDate)) {
+    if (!/^\\d{8}$/.test(requestedDate)) {
       return res.status(400).json({ error: "Invalid date. Use YYYYMMDD." });
     }
+
     const params = new URLSearchParams({ limit: "500", dates: requestedDate });
     if (league.groups) params.set("groups", league.groups);
-    const scoreboard = await getJson(`${SITE_BASE}/scoreboard?${params.toString()}`);
-    const events = scoreboard.events || [];
-    const liveEvents = events.filter(event => event.status?.type?.state === "in");
-    const detailResults = await mapWithConcurrency(liveEvents, 4, getGameDetails);
-    const detailsById = {};
-    liveEvents.forEach((event, index) => { detailsById[event.id] = detailResults[index]; });
-    const games = events.map(event => mapGame(event, detailsById[event.id] || null));
 
-    res.setHeader("Cache-Control", "s-maxage=8, stale-while-revalidate=10");
+    // This endpoint deliberately returns scoreboard data only. It does not wait
+    // for play-by-play or box-score lookups, so score and clock can refresh quickly.
+    const scoreboard = await getJson(`${SITE_BASE}/scoreboard?${params.toString()}`);
+    const games = (scoreboard.events || []).map(event => {
+      const competitors = event.competitions?.[0]?.competitors || [];
+      const home = competitors.find(team => team.homeAway === "home");
+      const away = competitors.find(team => team.homeAway === "away");
+      const mapTeam = item => ({
+        id: item?.team?.id || null,
+        name: item?.team?.displayName || "Team",
+        abbreviation: item?.team?.abbreviation || "",
+        score: Number(item?.score || 0),
+        color: item?.team?.color || null,
+        alternateColor: item?.team?.alternateColor || null,
+        records: item?.records || [],
+        stats: {}
+      });
+
+      return {
+        id: event.id,
+        name: event.name,
+        shortName: event.shortName || event.name,
+        date: event.date,
+        status: event.status?.type?.description || "",
+        state: event.status?.type?.state || "",
+        period: event.status?.period || 0,
+        clock: event.status?.displayClock || "",
+        periodLengthSeconds: league.periodLengthSeconds,
+        regulationPeriods: league.regulationPeriods,
+        home: mapTeam(home),
+        away: mapTeam(away)
+      };
+    });
+
+    res.setHeader("Cache-Control", "no-store, max-age=0, must-revalidate");
     return res.status(200).json({
       source: "ESPN",
       league: leagueKey,
@@ -190,11 +93,14 @@ export default async function handler(req, res) {
       updated: new Date().toISOString(),
       date: requestedDate,
       count: games.length,
-      liveCount: liveEvents.length,
-      analysisVersion: 2,
+      liveCount: games.filter(game => game.state === "in").length,
       games
     });
   } catch (error) {
-    return res.status(502).json({ error: "Score data request failed", league: leagueKey, details: error.message });
+    return res.status(502).json({
+      error: "Score data request failed",
+      league: leagueKey,
+      details: error.message
+    });
   }
 }
