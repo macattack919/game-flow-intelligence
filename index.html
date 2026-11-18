@@ -14,16 +14,16 @@
 <body>
 <header><div class="wrap"><div class="eyebrow">LIVE BASKETBALL ANALYTICS</div><h1>GAME FLOW <span style="color:var(--cyan)">INTELLIGENCE</span></h1><div class="subtitle">LIVE SCORING FLOW • OVER/UNDER ANALYSIS</div></div></header>
 <main class="wrap">
-  <nav class="league-tabs" aria-label="League selection"><button class="league-tab active" data-league="nba">NBA</button><button class="league-tab" data-league="ncaa">NCAA MEN'S</button></nav>
+  <nav class="league-tabs" aria-label="League selection"><button class="league-tab active" data-league="ncaa">NCAA MEN'S</button><button class="league-tab" data-league="nba">NBA</button></nav>
   <div class="toolbar"><div class="status"><span class="dot"></span><span id="updateStatus">Connecting to ESPN…</span><span id="historyStatus" style="margin-left:10px"></span></div><div class="actions"><button class="action" id="exportHistoryButton">↓ Export Log</button><button class="action" id="refreshButton">↻ Refresh</button></div></div>
   <section class="metrics"><div class="metric"><div class="metric-label">Games Today</div><div class="metric-value" id="gamesTracked">—</div></div><div class="metric"><div class="metric-label">Live Games</div><div class="metric-value" id="liveGames">—</div></div><div class="metric"><div class="metric-label">Live Totals Available</div><div class="metric-value" id="liveTotals">—</div></div><div class="metric"><div class="metric-label">Comparisons Ready</div><div class="metric-value" id="comparisonsReady">—</div></div></section>
   <div class="filters"><button class="filter active" data-filter="all">All Games</button><button class="filter" data-filter="live">Live</button><button class="filter" data-filter="upcoming">Upcoming</button><button class="filter" data-filter="final">Final</button></div>
-  <div class="section-head"><h2 id="boardTitle">NBA Game Monitor</h2><span id="gameCount">0 games</span></div>
+  <div class="section-head"><h2 id="boardTitle">NCAA Men's Game Monitor</h2><span id="gameCount">0 games</span></div>
   <section class="games" id="games"><div class="empty">Loading scoreboard…</div></section>
   <div class="foot">GAME FLOW INTELLIGENCE <b>•</b> NBA + NCAA MEN'S</div>
 </main>
 <script>
-const REFRESH_MS=30000;const HISTORY_KEY='gfi_model_history_v1';const MAX_HISTORY_ROWS=12000;let league='nba',filter='all',games=[],loading=false;
+const REFRESH_MS=30000;const HISTORY_KEY='gfi_model_history_v1';const MAX_HISTORY_ROWS=12000;let league='ncaa',filter='all',games=[],loading=false;
 const $=id=>document.getElementById(id);const n=v=>{const x=Number(v);return Number.isFinite(x)?x:0};
 function readHistory(){try{const rows=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');return Array.isArray(rows)?rows:[]}catch(e){console.warn('History log could not be read',e);return []}}
 function writeHistory(rows){try{localStorage.setItem(HISTORY_KEY,JSON.stringify(rows.slice(-MAX_HISTORY_ROWS)));return true}catch(e){console.warn('History log storage is full or unavailable',e);return false}}
