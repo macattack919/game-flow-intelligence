@@ -102,25 +102,25 @@ export default async function handler(req, res) {
 
   function mapLiveTotal(oddsPayload) {
     const items = Array.isArray(oddsPayload?.items) ? oddsPayload.items : [];
-    const liveItems = items.filter(item => {
-      const provider = String(item.provider?.name || "").toLowerCase();
-      const type = String(item.type?.name || item.type || "").toLowerCase();
+    // ESPN can retain opening/closing/current pregame lines after tipoff.
+    // Only accept a provider entry explicitly labeled as in-game/live.
+    const liveItem = items.find(item => {
+      const providerName = String(item.provider?.name || "").toLowerCase();
+      const typeName = String(item.type?.name || item.type || "").toLowerCase();
       const details = String(item.details || "").toLowerCase();
-      return provider.includes("live") || type.includes("live") || details.includes("live");
+      return providerName.includes("live odds") ||
+        typeName.includes("live odds") ||
+        details.includes("live odds");
     });
-    const candidates = liveItems.length ? liveItems : items;
-    const valid = candidates
-      .map(item => ({
-        total: numberOrNull(item.overUnder ?? item.current?.overUnder ?? item.total),
-        isExplicitLive: liveItems.length > 0,
-        updated: item.lastUpdated || item.last_update || item.date || null
-      }))
-      .filter(item => item.total !== null);
-    if (!valid.length) return null;
+    if (!liveItem) return null;
+
+    const total = numberOrNull(liveItem.overUnder ?? liveItem.current?.overUnder ?? liveItem.total);
+    if (total === null) return null;
+
     return {
-      total: valid[0].total,
-      isExplicitLive: valid[0].isExplicitLive,
-      updated: valid[0].updated
+      total,
+      isExplicitLive: true,
+      updated: liveItem.lastUpdated || liveItem.last_update || liveItem.date || null
     };
   }
 
