@@ -217,7 +217,27 @@ export function projectLiveTotal({
       awayPPP: round1(awayPPP),
       combinedPPP: round1(homePPP + awayPPP),
       currentTotal,
-      note: "Possession and scoring-efficiency projection with early-game regression toward league averages."
+      overtime: period > regulationPeriods,
+      note: period > regulationPeriods
+        ? "Possession and scoring-efficiency projection through the end of the current overtime period; additional overtimes are not modeled."
+        : "Possession and scoring-efficiency projection with early-game regression toward league averages."
+    };
+  }
+
+  if (elapsedMinutes < 5) {
+    return {
+      total: null,
+      method: "warming_up",
+      sample: "EARLY SAMPLE",
+      elapsedMinutes: round1(elapsedMinutes),
+      remainingMinutes: round1(remainingMinutes),
+      possessionsPerTeam: null,
+      homePPP: null,
+      awayPPP: null,
+      combinedPPP: null,
+      currentTotal,
+      overtime: period > regulationPeriods,
+      note: "Waiting for complete box-score inputs or a longer game sample before using the fallback projection."
     };
   }
 
@@ -237,6 +257,7 @@ export function projectLiveTotal({
     awayPPP: null,
     combinedPPP: null,
     currentTotal,
+    overtime: period > regulationPeriods,
     note: "Box-score possession inputs are incomplete; using a simple score-and-clock fallback."
   };
 }
