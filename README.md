@@ -6,7 +6,8 @@ A separate basketball analytics application focused on live game totals and proj
 - NBA and NCAA Men's scoreboard tabs
 - ESPN scoreboard feed with game clocks and statuses
 - Live play-by-play scoring events and team statistics when ESPN supplies them
-- 30-second scoreboard refresh
+- 5-second scoreboard-only refresh for the selected league, with Vercel response caching disabled
+- 30-second detailed box-score and play-by-play refresh for both leagues
 - Possession-and-efficiency live game-total projection when the required box-score fields are available
 - Model-projected point margin from separate projected team scores, to help assess a spread manually; this is not a sportsbook spread quote
 - Estimated possessions remaining, using the live pace estimate when box-score inputs are available and the league pace baseline when they are not
@@ -14,7 +15,7 @@ A separate basketball analytics application focused on live game totals and proj
 - Early-game regression toward league pace and points-per-possession baselines
 - Overtime-aware clock handling; the current projection only covers the end of the current overtime period and does not add hypothetical future overtimes
 - Built-in Node tests for possession extraction, projection, fallback, and overtime
-- Browser-side prediction history captured on each successful 30-second scoreboard refresh
+- Browser-side prediction history captured on a throttled 30-second cadence
 - Final score records used to calculate projection error for earlier snapshots
 - CSV export of prediction history
 
@@ -38,6 +39,7 @@ These are starting assumptions, not optimized or validated model parameters. The
 
 ## Important limitations
 - The dashboard does not display sportsbook totals or spreads because ESPN's feed does not consistently provide clearly identified in-game market lines. The model's projected margin is an independent estimate, not a live betting line.
+- The fast scoreboard path does not wait for detailed box-score requests. Score and clock speed is still subject to ESPN's own feed delay and is not guaranteed to update on a fixed schedule.
 - The possession model relies on ESPN exposing FGA, FTA, offensive rebounds, and turnovers in team box-score statistics. If any required field is missing, the app uses a simple score-and-clock fallback after five minutes.
 - This first version does not yet use pregame team strength, player availability, foul trouble, shot-quality data, lineup data, or opponent-adjusted ratings.
 - No historical model backtest has been completed. The internal sample label reflects the amount of in-game data, not a calibrated confidence probability; it is not displayed on the game cards.
@@ -54,7 +56,7 @@ When ESPN reports a game as final, the app stores the final score. The CSV expor
 Important:
 - History is stored only in the browser where the dashboard is running. It is not uploaded to Vercel or GitHub.
 - Keep the dashboard open during games, or revisit it after games finish on the same day so final scores can be recorded.
-- The dashboard fetches both NBA and NCAA Men's feeds every 30 seconds. It displays the selected league and records snapshots for both leagues in the background.
+- The selected league's score and clock refresh every five seconds. The other league's scoreboard refreshes every 30 seconds. Detailed box-score statistics and play-by-play are fetched separately every 30 seconds for both leagues, and the model recalculates using each new score/clock update with the most recent available statistics.
 - Use **Export Log** to download the CSV before clearing browser data or changing devices.
 - Browser storage is capped at 12,000 records; older entries are trimmed if necessary.
 
