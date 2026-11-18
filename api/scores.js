@@ -1,3 +1,5 @@
+import { projectLiveTotal } from "./total-model.js";
+
 const LEAGUES = {
   nba: {
     label: "NBA",
@@ -94,8 +96,12 @@ export default async function handler(req, res) {
     if (!team) return {};
     const stats = {};
     (team.statistics || []).forEach(stat => {
-      const key = String(stat.name || stat.label || "").toLowerCase();
-      stats[key] = stat.displayValue ?? stat.value ?? null;
+      const value = stat.displayValue ?? stat.value ?? null;
+      const keys = [stat.name, stat.label, stat.abbreviation, stat.displayName].filter(Boolean);
+      keys.forEach(rawKey => {
+        const key = String(rawKey).toLowerCase();
+        stats[key] = value;
+      });
     });
     return stats;
   }
@@ -145,6 +151,19 @@ export default async function handler(req, res) {
       stats: getTeamStats(summary, item?.team?.id)
     });
 
+    const homeTeam = team(home);
+    const awayTeam = team(away);
+    const totalProjection = projectLiveTotal({
+      league: leagueKey,
+      state: event.status?.type?.state || "",
+      period: event.status?.period || 0,
+      clock: event.status?.displayClock || "",
+      periodLengthSeconds: league.periodLengthSeconds,
+      regulationPeriods: league.regulationPeriods,
+      home: homeTeam,
+      away: awayTeam
+    });
+
     return {
       id: event.id,
       name: event.name,
@@ -156,8 +175,9 @@ export default async function handler(req, res) {
       clock: event.status?.displayClock || "",
       periodLengthSeconds: league.periodLengthSeconds,
       regulationPeriods: league.regulationPeriods,
-      home: team(home),
-      away: team(away),
+      home: homeTeam,
+      away: awayTeam,
+      totalProjection,
       scoringEvents: plays.filter(play => play.scoringPlay).slice(-120),
       playEvents: plays.slice(-300),
       liveTotal: mapLiveTotal(details?.odds),
