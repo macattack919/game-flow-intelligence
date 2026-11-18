@@ -1,0 +1,33 @@
+name: Validate Game Flow Intelligence
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run model tests
+        run: npm test
+      - name: Check backend JavaScript syntax
+        run: |
+          node --check api/scores.js
+          node --check api/total-model.js
+      - name: Check dashboard JavaScript syntax
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)];
+          if (!scripts.length) throw new Error('No inline JavaScript found in index.html');
+          scripts.forEach((match, index) => fs.writeFileSync(`/tmp/gfi-inline-${index}.js`, match[1]));
+          NODE
+          for file in /tmp/gfi-inline-*.js; do node --check "$file"; done
