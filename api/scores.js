@@ -44,7 +44,7 @@ export default async function handler(req, res) {
 
   try {
     const requestedDate = String(req.query?.date || easternDateYYYYMMDD()).replace(/[^0-9]/g, "");
-    if (!/^\\d{8}$/.test(requestedDate)) {
+    if (!/^\d{8}$/.test(requestedDate)) {
       return res.status(400).json({ error: "Invalid date. Use YYYYMMDD." });
     }
 
