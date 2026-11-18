@@ -163,6 +163,9 @@ export function projectLiveTotal({
       possessionsPerTeam: null,
       homePPP: null,
       awayPPP: null,
+      homeProjectedPoints: null,
+      awayProjectedPoints: null,
+      projectedHomeMargin: null,
       note: "Waiting for enough game time to establish a projection."
     };
   }
@@ -196,8 +199,10 @@ export function projectLiveTotal({
       prior.pointsPerPossession * PPP_PRIOR_POSSESSIONS
     ) / (awayPossessions + PPP_PRIOR_POSSESSIONS);
 
-    const projectedRemainingPoints = remainingPossessions * (homePPP + awayPPP);
-    const projectedTotal = currentTotal + projectedRemainingPoints;
+    const homeProjectedPoints = homeScore + remainingPossessions * homePPP;
+    const awayProjectedPoints = awayScore + remainingPossessions * awayPPP;
+    const projectedTotal = homeProjectedPoints + awayProjectedPoints;
+    const projectedHomeMargin = homeProjectedPoints - awayProjectedPoints;
     const sample = gamePossessions < 12
       ? "EARLY SAMPLE"
       : gamePossessions < 30
@@ -206,6 +211,9 @@ export function projectLiveTotal({
 
     return {
       total: round1(projectedTotal),
+      homeProjectedPoints: round1(homeProjectedPoints),
+      awayProjectedPoints: round1(awayProjectedPoints),
+      projectedHomeMargin: round1(projectedHomeMargin),
       method: "possessions_efficiency",
       sample,
       elapsedMinutes: round1(elapsedMinutes),
@@ -235,6 +243,9 @@ export function projectLiveTotal({
       homePPP: null,
       awayPPP: null,
       combinedPPP: null,
+      homeProjectedPoints: null,
+      awayProjectedPoints: null,
+      projectedHomeMargin: null,
       currentTotal,
       overtime: period > regulationPeriods,
       note: "Waiting for complete box-score inputs or a longer game sample before using the fallback projection."
@@ -242,12 +253,20 @@ export function projectLiveTotal({
   }
 
   const elapsedFraction = clockState.elapsedSeconds / clockState.windowSeconds;
-  const scorePaceTotal = elapsedFraction > 0
-    ? currentTotal / elapsedFraction
-    : null;
+  const homeProjectedPoints = elapsedFraction > 0 ? homeScore / elapsedFraction : null;
+  const awayProjectedPoints = elapsedFraction > 0 ? awayScore / elapsedFraction : null;
+  const scorePaceTotal = homeProjectedPoints === null || awayProjectedPoints === null
+    ? null
+    : homeProjectedPoints + awayProjectedPoints;
+  const projectedHomeMargin = homeProjectedPoints === null || awayProjectedPoints === null
+    ? null
+    : homeProjectedPoints - awayProjectedPoints;
 
   return {
     total: scorePaceTotal === null ? null : round1(scorePaceTotal),
+    homeProjectedPoints: homeProjectedPoints === null ? null : round1(homeProjectedPoints),
+    awayProjectedPoints: awayProjectedPoints === null ? null : round1(awayProjectedPoints),
+    projectedHomeMargin: projectedHomeMargin === null ? null : round1(projectedHomeMargin),
     method: "score_pace_fallback",
     sample: "LIMITED DATA",
     elapsedMinutes: round1(elapsedMinutes),
