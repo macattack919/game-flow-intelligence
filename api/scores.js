@@ -15,7 +15,7 @@ const LEAGUES = {
     corePath: "mens-college-basketball",
     regulationPeriods: 2,
     periodLengthSeconds: 20 * 60,
-    groups: null
+    groups: "50"
   }
 };
 
@@ -201,6 +201,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Invalid date. Use YYYYMMDD." });
     }
     const params = new URLSearchParams({ limit: "500", dates: requestedDate });
+    if (league.groups) params.set("groups", league.groups);
     const scoreboard = await getJson(`${SITE_BASE}/scoreboard?${params.toString()}`);
     const events = scoreboard.events || [];
     const liveEvents = events.filter(event => event.status?.type?.state === "in");
