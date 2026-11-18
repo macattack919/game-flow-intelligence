@@ -218,7 +218,7 @@ export default async function handler(req, res) {
       date: requestedDate,
       count: games.length,
       liveCount: liveEvents.length,
-      analysisVersion: 1,
+      analysisVersion: 2,
       games
     });
   } catch (error) {
