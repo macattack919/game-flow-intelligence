@@ -39,7 +39,7 @@ These are starting assumptions, not optimized or validated model parameters. The
 - The dashboard does not display sportsbook totals or spreads because ESPN's feed does not consistently provide clearly identified in-game market lines. The model's projected margin is an independent estimate, not a live betting line.
 - The possession model relies on ESPN exposing FGA, FTA, offensive rebounds, and turnovers in team box-score statistics. If any required field is missing, the app uses a simple score-and-clock fallback after five minutes.
 - This first version does not yet use pregame team strength, player availability, foul trouble, shot-quality data, lineup data, or opponent-adjusted ratings.
-- No historical model backtest has been completed. The displayed sample label reflects the amount of in-game data, not a calibrated confidence probability.
+- No historical model backtest has been completed. The internal sample label reflects the amount of in-game data, not a calibrated confidence probability; it is not displayed on the game cards.
 - No paid odds feed or sportsbook API key is required.
 - The app does not place bets.
 
