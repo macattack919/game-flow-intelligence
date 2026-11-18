@@ -46,6 +46,10 @@ test("creates a possession-and-efficiency projection for a live NBA game", () =>
   assert.equal(projection.remainingMinutes, 29);
   assert.ok(Number.isFinite(projection.total));
   assert.ok(projection.total >= 88);
+  assert.ok(Number.isFinite(projection.projectedHomeMargin));
+  assert.ok(Number.isFinite(projection.homeProjectedPoints));
+  assert.ok(Number.isFinite(projection.awayProjectedPoints));
+  assert.ok(Math.abs(projection.total - projection.homeProjectedPoints - projection.awayProjectedPoints) < 0.11);
 });
 
 test("uses a transparent score-pace fallback when possession stats are missing", () => {
@@ -62,6 +66,9 @@ test("uses a transparent score-pace fallback when possession stats are missing",
   assert.equal(projection.method, "score_pace_fallback");
   assert.equal(projection.sample, "LIMITED DATA");
   assert.equal(projection.total, 160);
+  assert.equal(projection.homeProjectedPoints, 96);
+  assert.equal(projection.awayProjectedPoints, 64);
+  assert.equal(projection.projectedHomeMargin, 32);
 });
 
 test("waits for a usable clock sample and ignores non-live games", () => {
