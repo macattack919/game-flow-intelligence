@@ -1,18 +1,16 @@
 # Game Flow Intelligence
 
-A separate basketball analytics application focused on live game totals for NBA and NCAA Men's games. Race to 80 remains a separate project.
+A separate basketball analytics application focused on live game totals and projected point margins for NBA and NCAA Men's games. Race to 80 remains a separate project.
 
 ## Current features
 - NBA and NCAA Men's scoreboard tabs
 - ESPN scoreboard feed with game clocks and statuses
 - Live play-by-play scoring events and team statistics when ESPN supplies them
 - 30-second scoreboard refresh
-- Possession-and-efficiency live total projection when the required box-score fields are available
+- Possession-and-efficiency live game-total projection when the required box-score fields are available
+- Model-projected point margin from separate projected team scores, to help assess a spread manually; this is not a sportsbook spread quote
 - A score-and-clock fallback after five minutes when the required possession fields are missing
 - Early-game regression toward league pace and points-per-possession baselines
-- Model sample and method shown on each live game card
-- ESPN Core API odds lookup for entries explicitly labeled "Live Odds"
-- Live-total comparison only when ESPN explicitly identifies an in-game line; opening, closing, or ordinary current pregame lines are never displayed as live totals
 - Overtime-aware clock handling; the current projection only covers the end of the current overtime period and does not add hypothetical future overtimes
 - Built-in Node tests for possession extraction, projection, fallback, and overtime
 - Browser-side prediction history captured on each successful 30-second scoreboard refresh
@@ -38,7 +36,7 @@ Initial settings:
 These are starting assumptions, not optimized or validated model parameters. The model is a transparent live estimate, not a calibrated probability model or a betting recommendation.
 
 ## Important limitations
-- ESPN's live odds availability is inconsistent. The live-total field is unavailable when no explicitly labeled in-game line is returned.
+- The dashboard does not display sportsbook totals or spreads because ESPN's feed does not consistently provide clearly identified in-game market lines. The model's projected margin is an independent estimate, not a live betting line.
 - The possession model relies on ESPN exposing FGA, FTA, offensive rebounds, and turnovers in team box-score statistics. If any required field is missing, the app uses a simple score-and-clock fallback after five minutes.
 - This first version does not yet use pregame team strength, player availability, foul trouble, shot-quality data, lineup data, or opponent-adjusted ratings.
 - No historical model backtest has been completed. The displayed sample label reflects the amount of in-game data, not a calibrated confidence probability.
@@ -48,7 +46,7 @@ These are starting assumptions, not optimized or validated model parameters. The
 
 ## Prediction history and review
 
-The dashboard stores a lightweight snapshot in the current browser's local storage on each successful refresh while a game is live. It records league, game, timestamp, clock, score, model projection, method, sample label, possession estimate, scoring efficiency, and any explicitly labeled ESPN live total.
+The dashboard stores a lightweight snapshot in the current browser's local storage on each successful refresh while a game is live. It records league, game, timestamp, clock, score, model projection, method, sample label, possession estimate, scoring efficiency, and projected point margin.
 
 When ESPN reports a game as final, the app stores the final score. The CSV export joins that final score to the game's earlier snapshots and calculates signed and absolute projection error.
 
