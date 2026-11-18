@@ -20,7 +20,9 @@ jobs:
       - name: Check backend JavaScript syntax
         run: |
           node --check api/scores.js
+          node --check api/details.js
           node --check api/total-model.js
+          node --check lib/total-model.js
       - name: Check dashboard JavaScript syntax
         run: |
           node <<'NODE'
@@ -28,6 +30,6 @@ jobs:
           const html = fs.readFileSync('index.html', 'utf8');
           const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)];
           if (!scripts.length) throw new Error('No inline JavaScript found in index.html');
-          scripts.forEach((match, index) => fs.writeFileSync(`/tmp/gfi-inline-${index}.js`, match[1]));
+          scripts.forEach((match, index) => fs.writeFileSync(`/tmp/gfi-inline-${index}.mjs`, match[1]));
           NODE
           for file in /tmp/gfi-inline-*.js; do node --check "$file"; done
