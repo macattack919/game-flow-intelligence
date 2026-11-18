@@ -32,4 +32,4 @@ jobs:
           if (!scripts.length) throw new Error('No inline JavaScript found in index.html');
           scripts.forEach((match, index) => fs.writeFileSync(`/tmp/gfi-inline-${index}.mjs`, match[1]));
           NODE
-          for file in /tmp/gfi-inline-*.js; do node --check "$file"; done
+          for file in /tmp/gfi-inline-*.mjs; do node --check "$file"; done
