@@ -60,13 +60,16 @@ export default async function handler(req, res) {
     const id = encodeURIComponent(event.id);
     const summaryUrl = `${SITE_BASE}/summary?event=${id}`;
     const situationUrl = `${CORE_BASE}/events/${id}/competitions/${id}/situation?lang=en&region=us`;
-    const [summaryResult, situationResult] = await Promise.allSettled([
+    const oddsUrl = `${CORE_BASE}/events/${id}/competitions/${id}/odds?limit=50`;
+    const [summaryResult, situationResult, oddsResult] = await Promise.allSettled([
       getJson(summaryUrl),
-      getJson(situationUrl)
+      getJson(situationUrl),
+      getJson(oddsUrl)
     ]);
     return {
       summary: summaryResult.status === "fulfilled" ? summaryResult.value : null,
-      situation: situationResult.status === "fulfilled" ? situationResult.value : null
+      situation: situationResult.status === "fulfilled" ? situationResult.value : null,
+      odds: oddsResult.status === "fulfilled" ? oddsResult.value : null
     };
   }
 
@@ -95,6 +98,30 @@ export default async function handler(req, res) {
       stats[key] = stat.displayValue ?? stat.value ?? null;
     });
     return stats;
+  }
+
+  function mapLiveTotal(oddsPayload) {
+    const items = Array.isArray(oddsPayload?.items) ? oddsPayload.items : [];
+    const liveItems = items.filter(item => {
+      const provider = String(item.provider?.name || "").toLowerCase();
+      const type = String(item.type?.name || item.type || "").toLowerCase();
+      const details = String(item.details || "").toLowerCase();
+      return provider.includes("live") || type.includes("live") || details.includes("live");
+    });
+    const candidates = liveItems.length ? liveItems : items;
+    const valid = candidates
+      .map(item => ({
+        total: numberOrNull(item.overUnder ?? item.current?.overUnder ?? item.total),
+        isExplicitLive: liveItems.length > 0,
+        updated: item.lastUpdated || item.last_update || item.date || null
+      }))
+      .filter(item => item.total !== null);
+    if (!valid.length) return null;
+    return {
+      total: valid[0].total,
+      isExplicitLive: valid[0].isExplicitLive,
+      updated: valid[0].updated
+    };
   }
 
   function mapGame(event, details) {
@@ -133,6 +160,7 @@ export default async function handler(req, res) {
       away: team(away),
       scoringEvents: plays.filter(play => play.scoringPlay).slice(-120),
       playEvents: plays.slice(-300),
+      liveTotal: mapLiveTotal(details?.odds),
       statsAvailable: !!summary,
       situationAvailable: !!details?.situation
     };
