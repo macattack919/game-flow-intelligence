@@ -62,16 +62,13 @@ export default async function handler(req, res) {
     const id = encodeURIComponent(event.id);
     const summaryUrl = `${SITE_BASE}/summary?event=${id}`;
     const situationUrl = `${CORE_BASE}/events/${id}/competitions/${id}/situation?lang=en&region=us`;
-    const oddsUrl = `${CORE_BASE}/events/${id}/competitions/${id}/odds?limit=50`;
-    const [summaryResult, situationResult, oddsResult] = await Promise.allSettled([
+    const [summaryResult, situationResult] = await Promise.allSettled([
       getJson(summaryUrl),
-      getJson(situationUrl),
-      getJson(oddsUrl)
+      getJson(situationUrl)
     ]);
     return {
       summary: summaryResult.status === "fulfilled" ? summaryResult.value : null,
-      situation: situationResult.status === "fulfilled" ? situationResult.value : null,
-      odds: oddsResult.status === "fulfilled" ? oddsResult.value : null
+      situation: situationResult.status === "fulfilled" ? situationResult.value : null
     };
   }
 
@@ -104,30 +101,6 @@ export default async function handler(req, res) {
       });
     });
     return stats;
-  }
-
-  function mapLiveTotal(oddsPayload) {
-    const items = Array.isArray(oddsPayload?.items) ? oddsPayload.items : [];
-    // ESPN can retain opening/closing/current pregame lines after tipoff.
-    // Only accept a provider entry explicitly labeled as in-game/live.
-    const liveItem = items.find(item => {
-      const providerName = String(item.provider?.name || "").toLowerCase();
-      const typeName = String(item.type?.name || item.type || "").toLowerCase();
-      const details = String(item.details || "").toLowerCase();
-      return providerName.includes("live odds") ||
-        typeName.includes("live odds") ||
-        details.includes("live odds");
-    });
-    if (!liveItem) return null;
-
-    const total = numberOrNull(liveItem.overUnder ?? liveItem.current?.overUnder ?? liveItem.total);
-    if (total === null) return null;
-
-    return {
-      total,
-      isExplicitLive: true,
-      updated: liveItem.lastUpdated || liveItem.last_update || liveItem.date || null
-    };
   }
 
   function mapGame(event, details) {
@@ -180,7 +153,6 @@ export default async function handler(req, res) {
       totalProjection,
       scoringEvents: plays.filter(play => play.scoringPlay).slice(-120),
       playEvents: plays.slice(-300),
-      liveTotal: mapLiveTotal(details?.odds),
       statsAvailable: !!summary,
       situationAvailable: !!details?.situation
     };
