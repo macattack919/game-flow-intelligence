@@ -100,7 +100,7 @@ export default async function handler(req, res) {
       details[eventId] = {
         homeStats: getTeamStats(summary, home?.id),
         awayStats: getTeamStats(summary, away?.id),
-        scoringEvents: plays.filter(play => play.scoringPlay).slice(-120),
+        scoringEvents: plays.filter(play => play.scoringPlay).slice(-500),
         playEvents: plays.slice(-300),
         updated: new Date().toISOString()
       };
