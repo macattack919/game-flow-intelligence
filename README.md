@@ -40,6 +40,7 @@ These are starting assumptions, not optimized or validated model parameters. The
 ## Important limitations
 - The dashboard does not display sportsbook totals or spreads because ESPN's feed does not consistently provide clearly identified in-game market lines. The model's projected margin is an independent estimate, not a live betting line.
 - The fast scoreboard path does not wait for detailed box-score requests. Score and clock speed is still subject to ESPN's own feed delay and is not guaranteed to update on a fixed schedule.
+- The fast scoreboard request does not wait for detailed box-score lookups. Score and clock freshness is still subject to ESPN's own feed delay; five seconds is the app's polling interval, not a guarantee from ESPN.
 - The possession model relies on ESPN exposing FGA, FTA, offensive rebounds, and turnovers in team box-score statistics. If any required field is missing, the app uses a simple score-and-clock fallback after five minutes.
 - This first version does not yet use pregame team strength, player availability, foul trouble, shot-quality data, lineup data, or opponent-adjusted ratings.
 - No historical model backtest has been completed. The internal sample label reflects the amount of in-game data, not a calibrated confidence probability; it is not displayed on the game cards.
