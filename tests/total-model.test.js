@@ -47,6 +47,8 @@ test("creates a possession-and-efficiency projection for a live NBA game", () =>
   assert.ok(Number.isFinite(projection.total));
   assert.ok(projection.total >= 88);
   assert.ok(Number.isFinite(projection.projectedHomeMargin));
+  assert.ok(Number.isFinite(projection.projectedRemainingPossessions));
+  assert.ok(projection.projectedRemainingPossessions > 0);
   assert.ok(Number.isFinite(projection.homeProjectedPoints));
   assert.ok(Number.isFinite(projection.awayProjectedPoints));
   assert.ok(Math.abs(projection.total - projection.homeProjectedPoints - projection.awayProjectedPoints) < 0.11);
@@ -69,6 +71,7 @@ test("uses a transparent score-pace fallback when possession stats are missing",
   assert.equal(projection.homeProjectedPoints, 96);
   assert.equal(projection.awayProjectedPoints, 64);
   assert.equal(projection.projectedHomeMargin, 32);
+  assert.equal(projection.projectedRemainingPossessions, 59.1);
 });
 
 test("waits for a usable clock sample and ignores non-live games", () => {
@@ -83,6 +86,7 @@ test("waits for a usable clock sample and ignores non-live games", () => {
     away: { score: 0, stats: awayStats }
   });
   assert.equal(early.method, "warming_up");
+  assert.equal(early.projectedRemainingPossessions, null);
 
   const final = projectLiveTotal({
     league: "nba",
