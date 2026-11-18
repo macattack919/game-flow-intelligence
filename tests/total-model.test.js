@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { estimatePossessions, extractAdvancedBox, projectLiveTotal } from "../api/total-model.js";
+import { estimatePossessions, extractAdvancedBox, projectLiveTotal } from "../lib/total-model.js";
 
 const homeStats = {
   "fieldGoalsMade-fieldGoalsAttempted": "18-40",
