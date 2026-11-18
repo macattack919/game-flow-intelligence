@@ -9,6 +9,7 @@ A separate basketball analytics application focused on live game totals and proj
 - 30-second scoreboard refresh
 - Possession-and-efficiency live game-total projection when the required box-score fields are available
 - Model-projected point margin from separate projected team scores, to help assess a spread manually; this is not a sportsbook spread quote
+- Estimated possessions remaining, using the live pace estimate when box-score inputs are available and the league pace baseline when they are not
 - A score-and-clock fallback after five minutes when the required possession fields are missing
 - Early-game regression toward league pace and points-per-possession baselines
 - Overtime-aware clock handling; the current projection only covers the end of the current overtime period and does not add hypothetical future overtimes
@@ -23,7 +24,7 @@ The possession estimate is:
 
 `Possessions ≈ FGA + 0.44 × FTA − offensive rebounds + turnovers`
 
-The game possession estimate averages the two teams' possession estimates. Remaining possessions are projected using an early-game pace blend with a league-level prior. Each team's observed points per possession is regressed toward a league-level scoring-efficiency prior using 18 pseudo-possessions.
+The game possession estimate averages the two teams' possession estimates. Remaining possessions are projected using an early-game pace blend with a league-level prior. When possession inputs are missing, remaining possessions use the league pace baseline multiplied by remaining game time. Each team's observed points per possession is regressed toward a league-level scoring-efficiency prior using 18 pseudo-possessions.
 
 Initial settings:
 - NBA pace prior: 99.0 possessions per 48 minutes
@@ -46,7 +47,7 @@ These are starting assumptions, not optimized or validated model parameters. The
 
 ## Prediction history and review
 
-The dashboard stores a lightweight snapshot in the current browser's local storage on each successful refresh while a game is live. It records league, game, timestamp, clock, score, model projection, method, sample label, possession estimate, scoring efficiency, and projected point margin.
+The dashboard stores a lightweight snapshot in the current browser's local storage on each successful refresh while a game is live. It records league, game, timestamp, clock, score, model projection, method, sample label, possession estimate, scoring efficiency, projected point margin, and estimated remaining possessions.
 
 When ESPN reports a game as final, the app stores the final score. The CSV export joins that final score to the game's earlier snapshots and calculates signed and absolute projection error.
 
