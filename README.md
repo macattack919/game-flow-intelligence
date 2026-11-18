@@ -55,7 +55,7 @@ When ESPN reports a game as final, the app stores the final score. The CSV expor
 Important:
 - History is stored only in the browser where the dashboard is running. It is not uploaded to Vercel or GitHub.
 - Keep the dashboard open during games, or revisit it after games finish on the same day so final scores can be recorded.
-- The dashboard only fetches the currently selected league. Switch between NBA and NCAA Men's during the games to collect snapshots for both.
+- The dashboard fetches both NBA and NCAA Men's feeds every 30 seconds. It displays the selected league and records snapshots for both leagues in the background.
 - Use **Export Log** to download the CSV before clearing browser data or changing devices.
 - Browser storage is capped at 12,000 records; older entries are trimmed if necessary.
 
