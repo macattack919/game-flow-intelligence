@@ -15,6 +15,9 @@ A separate basketball analytics application focused on live game totals for NBA 
 - Live-total comparison only when ESPN explicitly identifies an in-game line; opening, closing, or ordinary current pregame lines are never displayed as live totals
 - Overtime-aware clock handling; the current projection only covers the end of the current overtime period and does not add hypothetical future overtimes
 - Built-in Node tests for possession extraction, projection, fallback, and overtime
+- Browser-side prediction history captured on each successful 30-second scoreboard refresh
+- Final score records used to calculate projection error for earlier snapshots
+- CSV export of prediction history
 
 ## Live total model v1
 
@@ -41,6 +44,20 @@ These are starting assumptions, not optimized or validated model parameters. The
 - No historical model backtest has been completed. The displayed sample label reflects the amount of in-game data, not a calibrated confidence probability.
 - No paid odds feed or sportsbook API key is required.
 - The app does not place bets.
+
+
+## Prediction history and review
+
+The dashboard stores a lightweight snapshot in the current browser's local storage on each successful refresh while a game is live. It records league, game, timestamp, clock, score, model projection, method, sample label, possession estimate, scoring efficiency, and any explicitly labeled ESPN live total.
+
+When ESPN reports a game as final, the app stores the final score. The CSV export joins that final score to the game's earlier snapshots and calculates signed and absolute projection error.
+
+Important:
+- History is stored only in the browser where the dashboard is running. It is not uploaded to Vercel or GitHub.
+- Keep the dashboard open during games, or revisit it after games finish on the same day so final scores can be recorded.
+- The dashboard only fetches the currently selected league. Switch between NBA and NCAA Men's during the games to collect snapshots for both.
+- Use **Export Log** to download the CSV before clearing browser data or changing devices.
+- Browser storage is capped at 12,000 records; older entries are trimmed if necessary.
 
 ## Tests
 
