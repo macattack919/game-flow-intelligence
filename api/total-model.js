@@ -161,6 +161,7 @@ export function projectLiveTotal({
       method: "warming_up",
       sample: "EARLY SAMPLE",
       possessionsPerTeam: null,
+      projectedRemainingPossessions: null,
       homePPP: null,
       awayPPP: null,
       homeProjectedPoints: null,
@@ -240,6 +241,7 @@ export function projectLiveTotal({
       elapsedMinutes: round1(elapsedMinutes),
       remainingMinutes: round1(remainingMinutes),
       possessionsPerTeam: null,
+      projectedRemainingPossessions: null,
       homePPP: null,
       awayPPP: null,
       combinedPPP: null,
@@ -261,6 +263,7 @@ export function projectLiveTotal({
   const projectedHomeMargin = homeProjectedPoints === null || awayProjectedPoints === null
     ? null
     : homeProjectedPoints - awayProjectedPoints;
+  const projectedRemainingPossessions = prior.possessionsPerGame / prior.gameMinutes * remainingMinutes;
 
   return {
     total: scorePaceTotal === null ? null : round1(scorePaceTotal),
@@ -272,6 +275,7 @@ export function projectLiveTotal({
     elapsedMinutes: round1(elapsedMinutes),
     remainingMinutes: round1(remainingMinutes),
     possessionsPerTeam: null,
+    projectedRemainingPossessions: round1(projectedRemainingPossessions),
     homePPP: null,
     awayPPP: null,
     combinedPPP: null,
