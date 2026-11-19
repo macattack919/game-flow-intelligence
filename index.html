@@ -66,9 +66,18 @@ function captureHistory(currentGames,currentLeague){
   for(const g of currentGames){
     const key=`${currentLeague}:${g.id}`;const state=statusOf(g);
     if(state==='live'){
-      const model=g.totalProjection||{};const latest=[...rows].reverse().find(row=>row.kind==='snapshot'&&row.league===currentLeague&&String(row.eventId)===String(g.id));
-      if(latest&&latest.clock===g.clock&&latest.period===g.period&&latest.homeScore===n(g.home.score)&&latest.awayScore===n(g.away.score))continue;
-      rows.push({kind:'snapshot',capturedAt:now,league:currentLeague,eventId:String(g.id),gameDate:g.date||'',awayTeam:g.away.name,homeTeam:g.home.name,period:n(g.period),clock:g.clock||'',homeScore:n(g.home.score),awayScore:n(g.away.score),combinedScore:n(g.home.score)+n(g.away.score),liveLine:liveLines[liveLineKey(g,currentLeague)]??null,modelTotal:model.total??null,modelMethod:model.method||'',modelSample:model.sample||'',possessionsPerTeam:model.possessionsPerTeam??null,projectedRemainingPossessions:model.projectedRemainingPossessions??null,homePPP:model.homePPP??null,awayPPP:model.awayPPP??null});
+      const model=g.totalProjection||{};
+      const liveLine=liveLines[liveLineKey(g,currentLeague)]??null;
+      const signal=evaluateLiveTotalSignal({
+        projection:model,
+        liveLine,
+        remainingMinutes:model.remainingMinutes,
+        scoreMargin:Math.abs(n(g.home.score)-n(g.away.score)),
+        recentScoringSurge:hasRecentScoringSurge(g)
+      });
+      const latest=[...rows].reverse().find(row=>row.kind==='snapshot'&&row.league===currentLeague&&String(row.eventId)===String(g.id));
+      if(latest&&latest.clock===g.clock&&latest.period===g.period&&latest.homeScore===n(g.home.score)&&latest.awayScore===n(g.away.score)&&latest.liveLine===liveLine&&latest.signalStatus===signal.status&&latest.signalEdge===signal.edge)continue;
+      rows.push({kind:'snapshot',capturedAt:now,league:currentLeague,eventId:String(g.id),gameDate:g.date||'',awayTeam:g.away.name,homeTeam:g.home.name,period:n(g.period),clock:g.clock||'',homeScore:n(g.home.score),awayScore:n(g.away.score),combinedScore:n(g.home.score)+n(g.away.score),liveLine,signalStatus:signal.status,signalDirection:signal.direction,signalEdge:signal.edge,modelTotal:model.total??null,modelMethod:model.method||'',modelSample:model.sample||'',possessionsPerTeam:model.possessionsPerTeam??null,projectedRemainingPossessions:model.projectedRemainingPossessions??null,homePPP:model.homePPP??null,awayPPP:model.awayPPP??null});
       changed=true;
     }else if(state==='final'&&!knownFinals.has(key)){
       rows.push({kind:'final',capturedAt:now,league:currentLeague,eventId:String(g.id),gameDate:g.date||'',awayTeam:g.away.name,homeTeam:g.home.name,homeScore:n(g.home.score),awayScore:n(g.away.score),finalTotal:n(g.home.score)+n(g.away.score)});
@@ -85,7 +94,7 @@ function captureHistory(currentGames,currentLeague){
 function exportHistory(){
   const rows=readHistory();if(!rows.length){$('historyStatus').textContent='· No history recorded yet';return}
   const finals=new Map(rows.filter(row=>row.kind==='final').map(row=>[`${row.league}:${row.eventId}`,row]));
-  const columns=['capturedAt','league','eventId','awayTeam','homeTeam','period','clock','awayScore','homeScore','combinedScore','liveLine','modelTotal','finalTotal','projectionError','absoluteError','modelMethod','modelSample','possessionsPerTeam','projectedRemainingPossessions','homePPP','awayPPP'];
+  const columns=['capturedAt','league','eventId','awayTeam','homeTeam','period','clock','awayScore','homeScore','combinedScore','liveLine','signalStatus','signalDirection','signalEdge','modelTotal','finalTotal','projectionError','absoluteError','modelMethod','modelSample','possessionsPerTeam','projectedRemainingPossessions','homePPP','awayPPP'];
   const quote=value=>`"${String(value??'').replace(/"/g,'""')}"`;
   const output=[columns.join(',')];
   for(const row of rows.filter(item=>item.kind==='snapshot')){
