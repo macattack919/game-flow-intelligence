@@ -54,6 +54,55 @@ test("creates a possession-and-efficiency projection for a live NBA game", () =>
   assert.ok(Math.abs(projection.total - projection.homeProjectedPoints - projection.awayProjectedPoints) < 0.11);
 });
 
+test("uses recent possession pace as a limited-weight adjustment", () => {
+  const input = {
+    league: "nba",
+    state: "in",
+    period: 2,
+    clock: "5:00",
+    periodLengthSeconds: 12 * 60,
+    regulationPeriods: 4,
+    home: { score: 45, stats: homeStats },
+    away: { score: 43, stats: awayStats }
+  };
+  const baseline = projectLiveTotal(input);
+  const fasterRecent = projectLiveTotal({
+    ...input,
+    recentPossessionsPerMinute: 2.7,
+    recentPaceWindowMinutes: 4.5
+  });
+  assert.equal(fasterRecent.recentPossessionsPerMinute, 2.7);
+  assert.ok(fasterRecent.possessionsPerMinute > baseline.possessionsPerMinute);
+  assert.ok(fasterRecent.total > baseline.total);
+});
+
+test("extracts live shot profile and returns a regressed team-specific efficiency", () => {
+  const shootingStats = {
+    ...homeStats,
+    "threePointFieldGoalsMade-threePointFieldGoalsAttempted": "6-15"
+  };
+  const box = extractAdvancedBox(shootingStats);
+  assert.equal(box.shootingComplete, true);
+  assert.equal(box.fieldGoalsMade, 18);
+  assert.equal(box.threePointFieldGoalsMade, 6);
+  assert.equal(box.threePointFieldGoalAttempts, 15);
+
+  const projection = projectLiveTotal({
+    league: "nba",
+    state: "in",
+    period: 2,
+    clock: "5:00",
+    periodLengthSeconds: 12 * 60,
+    regulationPeriods: 4,
+    home: { score: 45, stats: shootingStats },
+    away: { score: 43, stats: awayStats }
+  });
+  assert.equal(projection.homeShootingProfile.threePointPct, 40);
+  assert.equal(projection.homeShootingProfile.effectiveFieldGoalPct, 52.5);
+  assert.ok(Number.isFinite(projection.homePPP));
+  assert.ok(projection.homePPP > 0);
+});
+
 test("uses a transparent score-pace fallback when possession stats are missing", () => {
   const projection = projectLiveTotal({
     league: "ncaa",
