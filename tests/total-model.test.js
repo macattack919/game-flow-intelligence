@@ -236,7 +236,7 @@ test("tracks completed first-half scores and projects the second half from live 
     home: { score: 48 },
     away: { score: 42 },
     scoringEvents: [
-      { period: 2, clock: "0:04", sequence: 100, homeScore: 40, awayScore: 34 }
+      { period: 1, clock: "0:04", sequence: 100, homeScore: 40, awayScore: 34 }
     ],
     model: { possessionsPerMinute: 1.8, homePPP: 1.08, awayPPP: 1.0 }
   });
