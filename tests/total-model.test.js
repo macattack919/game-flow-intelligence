@@ -176,3 +176,28 @@ test("does not generate an entry from fallback projections or without a live lin
   });
   assert.equal(missingLine.status, "NEEDS_LINE");
 });
+
+
+test("uses the team-total label for individual team market comparisons", () => {
+  const missingLine = evaluateLiveTotalSignal({
+    projection: { total: 82.5, method: "possessions_efficiency", elapsedMinutes: 18 },
+    liveLine: null,
+    remainingMinutes: 22,
+    scoreMargin: 5,
+    marketLabel: "team total"
+  });
+  assert.equal(missingLine.status, "NEEDS_LINE");
+  assert.match(missingLine.reason, /live team total/);
+
+  const over = evaluateLiveTotalSignal({
+    projection: { total: 91, method: "possessions_efficiency", elapsedMinutes: 18 },
+    liveLine: 82.5,
+    remainingMinutes: 22,
+    scoreMargin: 5,
+    marketLabel: "team total"
+  });
+  assert.equal(over.status, "OVER_WINDOW");
+  assert.equal(over.direction, "OVER");
+  assert.equal(over.edge, 8.5);
+  assert.match(over.reason, /live team total/);
+});
