@@ -31,6 +31,20 @@
 .live-line-input{display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #38536d;border-radius:8px;background:#101f32;color:var(--text);font:700 16px/1.2 system-ui,-apple-system,Segoe UI,sans-serif;font-variant-numeric:tabular-nums}
 .live-line-input:focus{outline:2px solid var(--cyan);outline-offset:1px}
 .signal-footnote{font-size:9px;color:var(--muted);grid-column:1/-1;margin-top:-4px}
+.team-total-panel{margin-top:11px;padding:12px;background:#0a1726;border:1px solid #29415b;border-radius:10px}
+.team-total-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:7px}
+.team-total-title{font-size:10px;letter-spacing:1.2px;font-weight:850;color:var(--text)}
+.team-total-subtitle{font-size:10px;color:var(--muted)}
+.team-total-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(112px,.8fr) minmax(135px,.9fr);gap:10px;align-items:center;padding:10px 0;border-top:1px solid #20364e}
+.team-total-name{font-size:12px;font-weight:800;color:var(--text)}
+.team-total-est{font-size:12px;color:var(--cyan);font-weight:800;margin-top:3px;font-variant-numeric:tabular-nums}
+.team-total-call{min-width:0}
+.team-total-call .signal-state{font-size:12px;margin-top:0}
+.team-total-gap{font-size:9px;color:var(--muted);margin-top:3px;line-height:1.3}
+.team-line-label{display:block;font-size:9px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:800}
+.team-line-input{margin-top:4px;font-size:14px;padding:7px 8px}
+.team-total-footnote{font-size:9px;color:var(--muted);margin-top:7px}
+@media(max-width:520px){.team-total-row{grid-template-columns:1fr 1fr;gap:7px}.team-total-call{text-align:right}.team-line-label{grid-column:1/-1}.team-line-input{max-width:180px}}
 @media(max-width:420px){.signal-panel{grid-template-columns:1fr}.signal-footnote{margin-top:0}}
 </style>
 </head>
@@ -58,6 +72,7 @@ function writeHistory(rows){try{localStorage.setItem(HISTORY_KEY,JSON.stringify(
 function readLiveLines(){try{const values=JSON.parse(localStorage.getItem(LIVE_LINES_KEY)||'{}');return values&&typeof values==='object'&&!Array.isArray(values)?values:{}}catch(e){console.warn('Saved live totals could not be read',e);return {}}}
 function saveLiveLines(){try{localStorage.setItem(LIVE_LINES_KEY,JSON.stringify(liveLines));return true}catch(e){console.warn('Live totals could not be saved',e);return false}}
 function liveLineKey(g,key=league){return `${key}:${g.id}`}
+function liveTeamLineKey(g,side,key=league){return `${key}:${g.id}:team:${side}`}
 liveLines=readLiveLines();
 function updateHistoryStatus(){const rows=readHistory();const snapshots=rows.filter(row=>row.kind==='snapshot').length;$('historyStatus').textContent=`· ${snapshots.toLocaleString()} snapshots saved in this browser`}
 function captureHistory(currentGames,currentLeague){
@@ -68,16 +83,36 @@ function captureHistory(currentGames,currentLeague){
     if(state==='live'){
       const model=g.totalProjection||{};
       const liveLine=liveLines[liveLineKey(g,currentLeague)]??null;
+      const homeTeamLine=liveLines[liveTeamLineKey(g,'home',currentLeague)]??null;
+      const awayTeamLine=liveLines[liveTeamLineKey(g,'away',currentLeague)]??null;
+      const recentScoringSurge=hasRecentScoringSurge(g);
+      const scoreMargin=Math.abs(n(g.home.score)-n(g.away.score));
       const signal=evaluateLiveTotalSignal({
         projection:model,
         liveLine,
         remainingMinutes:model.remainingMinutes,
-        scoreMargin:Math.abs(n(g.home.score)-n(g.away.score)),
-        recentScoringSurge:hasRecentScoringSurge(g)
+        scoreMargin,
+        recentScoringSurge
+      });
+      const homeTeamSignal=evaluateLiveTotalSignal({
+        projection:model&&model.homeProjectedPoints!==null&&model.homeProjectedPoints!==undefined&&Number.isFinite(Number(model.homeProjectedPoints))?{...model,total:Number(model.homeProjectedPoints)}:null,
+        liveLine:homeTeamLine,
+        remainingMinutes:model.remainingMinutes,
+        scoreMargin,
+        recentScoringSurge,
+        marketLabel:'team total'
+      });
+      const awayTeamSignal=evaluateLiveTotalSignal({
+        projection:model&&model.awayProjectedPoints!==null&&model.awayProjectedPoints!==undefined&&Number.isFinite(Number(model.awayProjectedPoints))?{...model,total:Number(model.awayProjectedPoints)}:null,
+        liveLine:awayTeamLine,
+        remainingMinutes:model.remainingMinutes,
+        scoreMargin,
+        recentScoringSurge,
+        marketLabel:'team total'
       });
       const latest=[...rows].reverse().find(row=>row.kind==='snapshot'&&row.league===currentLeague&&String(row.eventId)===String(g.id));
-      if(latest&&latest.clock===g.clock&&latest.period===g.period&&latest.homeScore===n(g.home.score)&&latest.awayScore===n(g.away.score)&&latest.liveLine===liveLine&&latest.signalStatus===signal.status&&latest.signalEdge===signal.edge)continue;
-      rows.push({kind:'snapshot',capturedAt:now,league:currentLeague,eventId:String(g.id),gameDate:g.date||'',awayTeam:g.away.name,homeTeam:g.home.name,period:n(g.period),clock:g.clock||'',homeScore:n(g.home.score),awayScore:n(g.away.score),combinedScore:n(g.home.score)+n(g.away.score),liveLine,signalStatus:signal.status,signalDirection:signal.direction,signalEdge:signal.edge,modelTotal:model.total??null,modelMethod:model.method||'',modelSample:model.sample||'',possessionsPerTeam:model.possessionsPerTeam??null,projectedRemainingPossessions:model.projectedRemainingPossessions??null,homePPP:model.homePPP??null,awayPPP:model.awayPPP??null});
+      if(latest&&latest.clock===g.clock&&latest.period===g.period&&latest.homeScore===n(g.home.score)&&latest.awayScore===n(g.away.score)&&latest.liveLine===liveLine&&latest.signalStatus===signal.status&&latest.signalEdge===signal.edge&&latest.homeTeamLine===homeTeamLine&&latest.awayTeamLine===awayTeamLine&&latest.homeTeamSignalStatus===homeTeamSignal.status&&latest.homeTeamSignalEdge===homeTeamSignal.edge&&latest.awayTeamSignalStatus===awayTeamSignal.status&&latest.awayTeamSignalEdge===awayTeamSignal.edge)continue;
+      rows.push({kind:'snapshot',capturedAt:now,league:currentLeague,eventId:String(g.id),gameDate:g.date||'',awayTeam:g.away.name,homeTeam:g.home.name,period:n(g.period),clock:g.clock||'',homeScore:n(g.home.score),awayScore:n(g.away.score),combinedScore:n(g.home.score)+n(g.away.score),liveLine,signalStatus:signal.status,signalDirection:signal.direction,signalEdge:signal.edge,homeTeamLine,awayTeamLine,homeTeamSignalStatus:homeTeamSignal.status,homeTeamSignalDirection:homeTeamSignal.direction,homeTeamSignalEdge:homeTeamSignal.edge,awayTeamSignalStatus:awayTeamSignal.status,awayTeamSignalDirection:awayTeamSignal.direction,awayTeamSignalEdge:awayTeamSignal.edge,modelTotal:model.total??null,modelHomeTeamTotal:model.homeProjectedPoints??null,modelAwayTeamTotal:model.awayProjectedPoints??null,modelMethod:model.method||'',modelSample:model.sample||'',possessionsPerTeam:model.possessionsPerTeam??null,projectedRemainingPossessions:model.projectedRemainingPossessions??null,homePPP:model.homePPP??null,awayPPP:model.awayPPP??null});
       changed=true;
     }else if(state==='final'&&!knownFinals.has(key)){
       rows.push({kind:'final',capturedAt:now,league:currentLeague,eventId:String(g.id),gameDate:g.date||'',awayTeam:g.away.name,homeTeam:g.home.name,homeScore:n(g.home.score),awayScore:n(g.away.score),finalTotal:n(g.home.score)+n(g.away.score)});
@@ -94,7 +129,7 @@ function captureHistory(currentGames,currentLeague){
 function exportHistory(){
   const rows=readHistory();if(!rows.length){$('historyStatus').textContent='· No history recorded yet';return}
   const finals=new Map(rows.filter(row=>row.kind==='final').map(row=>[`${row.league}:${row.eventId}`,row]));
-  const columns=['capturedAt','league','eventId','awayTeam','homeTeam','period','clock','awayScore','homeScore','combinedScore','liveLine','signalStatus','signalDirection','signalEdge','modelTotal','finalTotal','projectionError','absoluteError','modelMethod','modelSample','possessionsPerTeam','projectedRemainingPossessions','homePPP','awayPPP'];
+  const columns=['capturedAt','league','eventId','awayTeam','homeTeam','period','clock','awayScore','homeScore','combinedScore','liveLine','signalStatus','signalDirection','signalEdge','modelTotal','modelHomeTeamTotal','modelAwayTeamTotal','homeTeamLine','awayTeamLine','homeTeamSignalStatus','homeTeamSignalDirection','homeTeamSignalEdge','awayTeamSignalStatus','awayTeamSignalDirection','awayTeamSignalEdge','finalTotal','projectionError','absoluteError','modelMethod','modelSample','possessionsPerTeam','projectedRemainingPossessions','homePPP','awayPPP'];
   const quote=value=>`"${String(value??'').replace(/"/g,'""')}"`;
   const output=[columns.join(',')];
   for(const row of rows.filter(item=>item.kind==='snapshot')){
@@ -239,6 +274,45 @@ function liveSignalPanel(g,model){
     <div class="signal-footnote">Manual total only · odds/juice are not included · signals are provisional and not calibrated yet</div>
   </section>`;
 }
+function teamTotalsPanel(g,model){
+  if(statusOf(g)!=='live')return '';
+  const recentScoringSurge=hasRecentScoringSurge(g);
+  const scoreMargin=Math.abs(n(g.home.score)-n(g.away.score));
+  const sides=[
+    {side:'away',team:g.away,projected:model?.awayProjectedPoints},
+    {side:'home',team:g.home,projected:model?.homeProjectedPoints}
+  ];
+  const rows=sides.map(({side,team,projected})=>{
+    const key=liveTeamLineKey(g,side);
+    const line=liveLines[key]??null;
+    const hasProjection=projected!==null&&projected!==undefined&&Number.isFinite(Number(projected));
+    const teamProjection=hasProjection&&model?{...model,total:Number(projected)}:null;
+    const signal=evaluateLiveTotalSignal({
+      projection:teamProjection,
+      liveLine:line,
+      remainingMinutes:model?.remainingMinutes,
+      scoreMargin,
+      recentScoringSurge,
+      marketLabel:'team total'
+    });
+    const sideClass=signal.direction==='OVER'?'over':signal.direction==='UNDER'?'under':'neutral';
+    const comparison=signal.edge===null
+      ?signal.reason
+      :`Model ${signal.projectedTotal.toFixed(1)} · Line ${signal.liveLine.toFixed(1)} · ${signal.edge>0?'+':''}${signal.edge.toFixed(1)} pts`;
+    return `<div class="team-total-row">
+      <div><div class="team-total-name">${esc(team.name)}</div><div class="team-total-est">EST. ${hasProjection?Number(projected).toFixed(1):'—'} PTS</div></div>
+      <div class="team-total-call"><div class="signal-state ${sideClass}">${esc(signal.label)}</div><div class="team-total-gap">${esc(comparison)}</div></div>
+      <label class="team-line-label">Sportsbook team total
+        <input class="live-line-input team-line-input" type="number" min="20" max="200" step="0.5" inputmode="decimal" placeholder="e.g. 78.5" value="${line===null?'':esc(line)}" data-line-key="${esc(key)}" aria-label="Enter ${esc(team.name)} team total line">
+      </label>
+    </div>`;
+  }).join('');
+  return `<section class="team-total-panel" aria-label="Projected team totals">
+    <div class="team-total-head"><div class="team-total-title">TEAM TOTALS</div><div class="team-total-subtitle">Projected final points · independent over/under signals</div></div>
+    ${rows}
+    <div class="team-total-footnote">Enter each team's current live total separately. Team signals use the same provisional edge thresholds as the game total.</div>
+  </section>`;
+}
 function card(g){
   const state=statusOf(g),model=g.totalProjection||null;
   const projectedTotal=model?.total!==null&&model?.total!==undefined&&Number.isFinite(Number(model.total))?Number(model.total):null;
@@ -248,7 +322,7 @@ function card(g){
   const hasPossessions=possessions!==null&&possessions!==undefined&&Number.isFinite(Number(possessions));
   const ppp=model?.homePPP!==null&&model?.awayPPP!==null&&model?.homePPP!==undefined&&model?.awayPPP!==undefined?`${model.homePPP} / ${model.awayPPP}`:'—';
   const homeLead=n(g.home.score)>n(g.away.score),awayLead=n(g.away.score)>n(g.home.score);
-  return `<article class="game ${state==='live'?'live':''}"><div class="game-head"><div class="game-status ${state==='live'?'live':''}">${statusLabel(g)}</div><div class="clock">${esc(fmtPeriod(g))}</div></div><div class="team"><div><div class="team-name">${esc(g.away.name)}<span class="record">${esc(record(g.away))}</span></div></div><div class="score ${awayLead?'leading':''}">${n(g.away.score)}</div></div><div class="team"><div><div class="team-name">${esc(g.home.name)}<span class="record">${esc(record(g.home))}</span></div></div><div class="score ${homeLead?'leading':''}">${n(g.home.score)}</div></div><div class="divider"></div><div class="analysis"><div class="analysis-cell"><div class="label">Live combined score</div><div class="value">${state==='upcoming'?'—':n(g.home.score)+n(g.away.score)}</div></div><div class="analysis-cell"><div class="label">Model projection</div><div class="value">${projectedTotal===null?'—':projectedTotal}</div></div><div class="analysis-cell"><div class="label">Model projected margin</div><div class="value">${esc(marginText)}</div></div><div class="analysis-cell"><div class="label">Estimated possessions remaining</div><div class="value">${hasPossessions?possessions:'—'}</div></div><div class="analysis-cell"><div class="label">Home / away PPP</div><div class="value">${ppp}</div></div></div>${liveSignalPanel(g,model)}${scoreFlowChart(g)}</div></article>`
+  return `<article class="game ${state==='live'?'live':''}"><div class="game-head"><div class="game-status ${state==='live'?'live':''}">${statusLabel(g)}</div><div class="clock">${esc(fmtPeriod(g))}</div></div><div class="team"><div><div class="team-name">${esc(g.away.name)}<span class="record">${esc(record(g.away))}</span></div></div><div class="score ${awayLead?'leading':''}">${n(g.away.score)}</div></div><div class="team"><div><div class="team-name">${esc(g.home.name)}<span class="record">${esc(record(g.home))}</span></div></div><div class="score ${homeLead?'leading':''}">${n(g.home.score)}</div></div><div class="divider"></div><div class="analysis"><div class="analysis-cell"><div class="label">Live combined score</div><div class="value">${state==='upcoming'?'—':n(g.home.score)+n(g.away.score)}</div></div><div class="analysis-cell"><div class="label">Model projection</div><div class="value">${projectedTotal===null?'—':projectedTotal}</div></div><div class="analysis-cell"><div class="label">Model projected margin</div><div class="value">${esc(marginText)}</div></div><div class="analysis-cell"><div class="label">Estimated possessions remaining</div><div class="value">${hasPossessions?possessions:'—'}</div></div><div class="analysis-cell"><div class="label">Home / away PPP</div><div class="value">${ppp}</div></div></div>${liveSignalPanel(g,model)}${teamTotalsPanel(g,model)}${scoreFlowChart(g)}</div></article>`
 }
 function render(){
   const active=document.activeElement;
@@ -388,10 +462,12 @@ $('games').addEventListener('change',event=>{
   if(!input)return;
   const key=input.dataset.lineKey;
   const raw=input.value.trim();
+  const min=input.classList.contains('team-line-input')?20:50;
+  const max=input.classList.contains('team-line-input')?200:400;
   if(!raw){delete liveLines[key];}
   else{
     const value=Number(raw);
-    if(Number.isFinite(value)&&value>=50&&value<=400)liveLines[key]=value;
+    if(Number.isFinite(value)&&value>=min&&value<=max)liveLines[key]=value;
   }
   saveLiveLines();
   updateBoard();
