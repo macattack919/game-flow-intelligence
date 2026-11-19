@@ -249,7 +249,7 @@ function foulBonusContext(g){
   const isFoul=play=>{
     const type=String(play.type||'').toLowerCase();
     const description=String(play.description||'').toLowerCase();
-    return type.includes('foul')||/\\bfoul\\b/.test(description);
+    return type.includes('foul')||/\bfoul\b/.test(description);
   };
   const fouls=relevant.filter(isFoul).filter(play=>play.teamId!==null&&play.teamId!==undefined);
   const homeId=String(g.home.id??'');
@@ -293,10 +293,12 @@ function liveFactorsPanel(g,model,fouls){
   if(statusOf(g)!=='live')return '';
   const recent=model?.recentPossessionsPerMinute;
   const base=model?.basePossessionsPerMinute;
-  const paceText=Number.isFinite(Number(recent))&&Number.isFinite(Number(base))
+  const hasRecent=recent!==null&&recent!==undefined&&Number.isFinite(Number(recent))&&
+    base!==null&&base!==undefined&&Number.isFinite(Number(base));
+  const paceText=hasRecent
     ?`${Number(recent).toFixed(2)} poss/min · baseline ${Number(base).toFixed(2)}`
     :'Building recent pace sample (about 3–5 minutes)';
-  const paceTone=Number.isFinite(Number(recent))&&Number.isFinite(Number(base))
+  const paceTone=hasRecent
     ?Number(recent)>Number(base)+0.08?'up':Number(recent)<Number(base)-0.08?'down':''
     :'';
   const profileText=profile=>{
