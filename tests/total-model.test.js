@@ -244,7 +244,8 @@ test("tracks completed first-half scores and projects the second half from live 
   assert.equal(halves.home.firstHalf.points, 40);
   assert.equal(halves.away.firstHalf.points, 34);
   assert.equal(halves.home.firstHalf.actual, true);
-  assert.equal(halves.away.secondHalf.points, 37.2);
+  assert.equal(halves.home.secondHalf.points, 37.2);
+  assert.equal(halves.away.secondHalf.points, 35);
   assert.equal(halves.home.secondHalf.actual, false);
 });
 
