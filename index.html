@@ -21,6 +21,16 @@
 .flow-key{display:inline-flex;align-items:center;gap:5px}
 .flow-swatch{width:15px;height:3px;border-radius:2px;display:inline-block}
 .flow-empty{padding:12px;text-align:center;color:var(--muted);font-size:11px}
+.ttlu-section{margin:26px 0 8px}
+.ttlu-section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.ttlu-section-head h2{font-size:16px;margin:0}
+.ttlu-section-head p{font-size:11px;color:var(--muted);margin:4px 0 0}
+.ttlu-open-link{color:var(--cyan);font-size:11px;font-weight:800;text-decoration:none;border:1px solid #294761;border-radius:8px;padding:7px 10px}
+.ttlu-open-link:hover{background:#16344d}
+.ttlu-clip{height:720px;overflow:hidden;position:relative;border:1px solid var(--line);border-radius:14px;background:#0a1726;isolation:isolate}
+.ttlu-frame{position:absolute;left:0;top:-130px;width:100%;height:1040px;border:0;background:#fff}
+.ttlu-note{font-size:10px;color:var(--muted);margin:8px 2px 0}
+@media(max-width:760px){.ttlu-clip{height:680px}.ttlu-frame{top:-95px;height:930px}}
 .signal-panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,220px);gap:12px;align-items:center;margin-top:11px;padding:12px;background:#0a1726;border:1px solid #29415b;border-radius:10px}
 .signal-kicker{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:800}
 .signal-state{font-size:17px;font-weight:900;letter-spacing:.3px;margin-top:3px}
@@ -70,6 +80,24 @@
   <div class="filters"><button class="filter active" data-filter="all">All Games</button><button class="filter" data-filter="live">Live</button><button class="filter" data-filter="upcoming">Upcoming</button><button class="filter" data-filter="final">Final</button></div>
   <div class="section-head"><h2 id="boardTitle">NCAA Men's Game Monitor</h2><span id="gameCount">0 games</span></div>
   <section class="games" id="games"><div class="empty">Loading scoreboard…</div></section>
+  <section class="ttlu-section" aria-label="Take The Live Under live board">
+    <div class="ttlu-section-head">
+      <div>
+        <h2>TAKE THE LIVE UNDER · LIVE BOARD</h2>
+        <p>Embedded game board and signals from Take The Live Under.</p>
+      </div>
+      <a class="ttlu-open-link" href="https://app.taketheliveunder.com/" target="_blank" rel="noopener noreferrer">Open full board ↗</a>
+    </div>
+    <div class="ttlu-clip">
+      <iframe class="ttlu-frame"
+        src="https://app.taketheliveunder.com/"
+        title="Take The Live Under live basketball board"
+        loading="lazy"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allow="clipboard-read; clipboard-write; fullscreen"></iframe>
+    </div>
+    <p class="ttlu-note">This is a clipped live view loaded directly from Take The Live Under. If the source site blocks embedding, use “Open full board” above.</p>
+  </section>
   <div class="foot">GAME FLOW INTELLIGENCE <b>•</b> NBA + NCAA MEN'S</div>
 </main>
 <script type="module">
