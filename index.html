@@ -21,6 +21,17 @@
 .flow-key{display:inline-flex;align-items:center;gap:5px}
 .flow-swatch{width:15px;height:3px;border-radius:2px;display:inline-block}
 .flow-empty{padding:12px;text-align:center;color:var(--muted);font-size:11px}
+.signal-panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,220px);gap:12px;align-items:center;margin-top:11px;padding:12px;background:#0a1726;border:1px solid #29415b;border-radius:10px}
+.signal-kicker{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:800}
+.signal-state{font-size:17px;font-weight:900;letter-spacing:.3px;margin-top:3px}
+.signal-state.over{color:var(--green)}.signal-state.under{color:var(--amber)}.signal-state.neutral{color:var(--muted)}
+.signal-reason{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.35}
+.signal-gap{font-size:11px;color:var(--text);margin-top:5px;font-weight:700}
+.live-line-label{display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:800}
+.live-line-input{display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #38536d;border-radius:8px;background:#101f32;color:var(--text);font:700 16px/1.2 system-ui,-apple-system,Segoe UI,sans-serif;font-variant-numeric:tabular-nums}
+.live-line-input:focus{outline:2px solid var(--cyan);outline-offset:1px}
+.signal-footnote{font-size:9px;color:var(--muted);grid-column:1/-1;margin-top:-4px}
+@media(max-width:420px){.signal-panel{grid-template-columns:1fr}.signal-footnote{margin-top:0}}
 </style>
 </head>
 <body>
@@ -35,8 +46,8 @@
   <div class="foot">GAME FLOW INTELLIGENCE <b>•</b> NBA + NCAA MEN'S</div>
 </main>
 <script type="module">
-import { projectLiveTotal } from '/lib/total-model.js';
-const REFRESH_MS=5000;const DETAILS_REFRESH_MS=30000;const HISTORY_KEY='gfi_model_history_v1';const MAX_HISTORY_ROWS=12000;let league='ncaa',filter='all',games=[];
+import { projectLiveTotal, evaluateLiveTotalSignal } from '/lib/total-model.js';
+const REFRESH_MS=5000;const DETAILS_REFRESH_MS=30000;const HISTORY_KEY='gfi_model_history_v1';const LIVE_LINES_KEY='gfi_manual_live_totals_v1';const MAX_HISTORY_ROWS=12000;let league='ncaa',filter='all',games=[],liveLines={};
 const rawLeagueGames={nba:[],ncaa:[]},leagueGames={nba:[],ncaa:[]};
 const detailCache={nba:{},ncaa:{}},lastDetailsFetch={nba:0,ncaa:0};
 const scoreboardLoading={nba:false,ncaa:false},detailsLoading={nba:false,ncaa:false};
@@ -44,6 +55,10 @@ const lastHistoryCapture={nba:0,ncaa:0};
 const $=id=>document.getElementById(id);const n=v=>{const x=Number(v);return Number.isFinite(x)?x:0};
 function readHistory(){try{const rows=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');return Array.isArray(rows)?rows:[]}catch(e){console.warn('History log could not be read',e);return []}}
 function writeHistory(rows){try{localStorage.setItem(HISTORY_KEY,JSON.stringify(rows.slice(-MAX_HISTORY_ROWS)));return true}catch(e){console.warn('History log storage is full or unavailable',e);return false}}
+function readLiveLines(){try{const values=JSON.parse(localStorage.getItem(LIVE_LINES_KEY)||'{}');return values&&typeof values==='object'&&!Array.isArray(values)?values:{}}catch(e){console.warn('Saved live totals could not be read',e);return {}}}
+function saveLiveLines(){try{localStorage.setItem(LIVE_LINES_KEY,JSON.stringify(liveLines));return true}catch(e){console.warn('Live totals could not be saved',e);return false}}
+function liveLineKey(g,key=league){return `${key}:${g.id}`}
+liveLines=readLiveLines();
 function updateHistoryStatus(){const rows=readHistory();const snapshots=rows.filter(row=>row.kind==='snapshot').length;$('historyStatus').textContent=`· ${snapshots.toLocaleString()} snapshots saved in this browser`}
 function captureHistory(currentGames,currentLeague){
   const rows=readHistory();const knownFinals=new Set(rows.filter(row=>row.kind==='final').map(row=>`${row.league}:${row.eventId}`));
@@ -53,7 +68,7 @@ function captureHistory(currentGames,currentLeague){
     if(state==='live'){
       const model=g.totalProjection||{};const latest=[...rows].reverse().find(row=>row.kind==='snapshot'&&row.league===currentLeague&&String(row.eventId)===String(g.id));
       if(latest&&latest.clock===g.clock&&latest.period===g.period&&latest.homeScore===n(g.home.score)&&latest.awayScore===n(g.away.score))continue;
-      rows.push({kind:'snapshot',capturedAt:now,league:currentLeague,eventId:String(g.id),gameDate:g.date||'',awayTeam:g.away.name,homeTeam:g.home.name,period:n(g.period),clock:g.clock||'',homeScore:n(g.home.score),awayScore:n(g.away.score),combinedScore:n(g.home.score)+n(g.away.score),modelTotal:model.total??null,modelMethod:model.method||'',modelSample:model.sample||'',possessionsPerTeam:model.possessionsPerTeam??null,projectedRemainingPossessions:model.projectedRemainingPossessions??null,homePPP:model.homePPP??null,awayPPP:model.awayPPP??null});
+      rows.push({kind:'snapshot',capturedAt:now,league:currentLeague,eventId:String(g.id),gameDate:g.date||'',awayTeam:g.away.name,homeTeam:g.home.name,period:n(g.period),clock:g.clock||'',homeScore:n(g.home.score),awayScore:n(g.away.score),combinedScore:n(g.home.score)+n(g.away.score),liveLine:liveLines[liveLineKey(g,currentLeague)]??null,modelTotal:model.total??null,modelMethod:model.method||'',modelSample:model.sample||'',possessionsPerTeam:model.possessionsPerTeam??null,projectedRemainingPossessions:model.projectedRemainingPossessions??null,homePPP:model.homePPP??null,awayPPP:model.awayPPP??null});
       changed=true;
     }else if(state==='final'&&!knownFinals.has(key)){
       rows.push({kind:'final',capturedAt:now,league:currentLeague,eventId:String(g.id),gameDate:g.date||'',awayTeam:g.away.name,homeTeam:g.home.name,homeScore:n(g.home.score),awayScore:n(g.away.score),finalTotal:n(g.home.score)+n(g.away.score)});
@@ -70,7 +85,7 @@ function captureHistory(currentGames,currentLeague){
 function exportHistory(){
   const rows=readHistory();if(!rows.length){$('historyStatus').textContent='· No history recorded yet';return}
   const finals=new Map(rows.filter(row=>row.kind==='final').map(row=>[`${row.league}:${row.eventId}`,row]));
-  const columns=['capturedAt','league','eventId','awayTeam','homeTeam','period','clock','awayScore','homeScore','combinedScore','modelTotal','finalTotal','projectionError','absoluteError','modelMethod','modelSample','possessionsPerTeam','projectedRemainingPossessions','homePPP','awayPPP'];
+  const columns=['capturedAt','league','eventId','awayTeam','homeTeam','period','clock','awayScore','homeScore','combinedScore','liveLine','modelTotal','finalTotal','projectionError','absoluteError','modelMethod','modelSample','possessionsPerTeam','projectedRemainingPossessions','homePPP','awayPPP'];
   const quote=value=>`"${String(value??'').replace(/"/g,'""')}"`;
   const output=[columns.join(',')];
   for(const row of rows.filter(item=>item.kind==='snapshot')){
@@ -83,6 +98,24 @@ function exportHistory(){
 }
 function clockSeconds(clock){const m=String(clock||'').match(/^(\d+):(\d+)$/);return m?Number(m[1])*60+Number(m[2]):null}
 function elapsedSeconds(g){const p=n(g.period),rem=clockSeconds(g.clock);if(!p||rem===null)return null;const len=n(g.periodLengthSeconds),reg=n(g.regulationPeriods);if(p<=reg)return (p-1)*len+(len-rem);return reg*len+(p-reg-1)*5*60+(5*60-rem)}
+function elapsedAtPoint(g,period,clock){const p=n(period),rem=clockSeconds(clock);if(!p||rem===null)return null;const len=n(g.periodLengthSeconds),reg=n(g.regulationPeriods);if(p<=reg)return (p-1)*len+(len-rem);return reg*len+(p-reg)*5*60+(5*60-rem)}
+function hasRecentScoringSurge(g){
+  const now=elapsedSeconds(g);if(now===null||now<5*60)return false;
+  const cutoff=now-180;
+  const events=(g.scoringEvents||[]).map(event=>({
+    t:elapsedAtPoint(g,event.period,event.clock),
+    total:n(event.homeScore)+n(event.awayScore)
+  })).filter(event=>event.t!==null&&event.t<=cutoff).sort((a,b)=>a.t-b.t);
+  const baseline=events[events.length-1];
+  if(!baseline)return false;
+  const windowMinutes=(now-baseline.t)/60;
+  if(windowMinutes<2||windowMinutes>4)return false;
+  const currentTotal=n(g.home.score)+n(g.away.score);
+  const recentPoints=currentTotal-baseline.total;
+  const gameAverage=currentTotal/(now/60);
+  const recentRate=recentPoints/windowMinutes;
+  return recentPoints>=10&&gameAverage>0&&recentRate>=gameAverage*1.3;
+}
 function totalRegSeconds(g){return n(g.periodLengthSeconds)*n(g.regulationPeriods)}
 function statusOf(g){return g.state==='in'?'live':g.state==='post'?'final':'upcoming'}
 function statusLabel(g){const s=statusOf(g);return s==='live'?'LIVE':s==='final'?'FINAL':'UPCOMING'}
@@ -171,6 +204,32 @@ function scoreFlowChart(g){
     </div>
   </div>`;
 }
+function liveSignalPanel(g,model){
+  if(statusOf(g)!=='live')return '';
+  const key=liveLineKey(g);
+  const line=liveLines[key]??null;
+  const signal=evaluateLiveTotalSignal({
+    projection:model,
+    liveLine:line,
+    remainingMinutes:model?.remainingMinutes,
+    scoreMargin:Math.abs(n(g.home.score)-n(g.away.score)),
+    recentScoringSurge:hasRecentScoringSurge(g)
+  });
+  const sideClass=signal.direction==='OVER'?'over':signal.direction==='UNDER'?'under':'neutral';
+  const gap=signal.edge===null?'':`Model ${signal.projectedTotal?.toFixed(1)} vs line ${signal.liveLine?.toFixed(1)} · ${signal.edge>0?'+':''}${signal.edge.toFixed(1)} pts`;
+  return `<section class="signal-panel" aria-label="Live total signal">
+    <div>
+      <div class="signal-kicker">Live bet signal</div>
+      <div class="signal-state ${sideClass}">${esc(signal.label)}</div>
+      <div class="signal-reason">${esc(signal.reason)}</div>
+      ${gap?`<div class="signal-gap">${esc(gap)}</div>`:''}
+    </div>
+    <label class="live-line-label">Current sportsbook live total
+      <input class="live-line-input" type="number" min="50" max="400" step="0.5" inputmode="decimal" placeholder="e.g. 145.5" value="${line===null?'':esc(line)}" data-line-key="${esc(key)}" aria-label="Enter current sportsbook live total">
+    </label>
+    <div class="signal-footnote">Manual total only · odds/juice are not included · signals are provisional and not calibrated yet</div>
+  </section>`;
+}
 function card(g){
   const state=statusOf(g),model=g.totalProjection||null;
   const projectedTotal=model?.total!==null&&model?.total!==undefined&&Number.isFinite(Number(model.total))?Number(model.total):null;
@@ -180,9 +239,25 @@ function card(g){
   const hasPossessions=possessions!==null&&possessions!==undefined&&Number.isFinite(Number(possessions));
   const ppp=model?.homePPP!==null&&model?.awayPPP!==null&&model?.homePPP!==undefined&&model?.awayPPP!==undefined?`${model.homePPP} / ${model.awayPPP}`:'—';
   const homeLead=n(g.home.score)>n(g.away.score),awayLead=n(g.away.score)>n(g.home.score);
-  return `<article class="game ${state==='live'?'live':''}"><div class="game-head"><div class="game-status ${state==='live'?'live':''}">${statusLabel(g)}</div><div class="clock">${esc(fmtPeriod(g))}</div></div><div class="team"><div><div class="team-name">${esc(g.away.name)}<span class="record">${esc(record(g.away))}</span></div></div><div class="score ${awayLead?'leading':''}">${n(g.away.score)}</div></div><div class="team"><div><div class="team-name">${esc(g.home.name)}<span class="record">${esc(record(g.home))}</span></div></div><div class="score ${homeLead?'leading':''}">${n(g.home.score)}</div></div><div class="divider"></div><div class="analysis"><div class="analysis-cell"><div class="label">Live combined score</div><div class="value">${state==='upcoming'?'—':n(g.home.score)+n(g.away.score)}</div></div><div class="analysis-cell"><div class="label">Model projection</div><div class="value">${projectedTotal===null?'—':projectedTotal}</div></div><div class="analysis-cell"><div class="label">Model projected margin</div><div class="value">${esc(marginText)}</div></div><div class="analysis-cell"><div class="label">Estimated possessions remaining</div><div class="value">${hasPossessions?possessions:'—'}</div></div><div class="analysis-cell"><div class="label">Home / away PPP</div><div class="value">${ppp}</div></div></div>${scoreFlowChart(g)}</div></article>`
+  return `<article class="game ${state==='live'?'live':''}"><div class="game-head"><div class="game-status ${state==='live'?'live':''}">${statusLabel(g)}</div><div class="clock">${esc(fmtPeriod(g))}</div></div><div class="team"><div><div class="team-name">${esc(g.away.name)}<span class="record">${esc(record(g.away))}</span></div></div><div class="score ${awayLead?'leading':''}">${n(g.away.score)}</div></div><div class="team"><div><div class="team-name">${esc(g.home.name)}<span class="record">${esc(record(g.home))}</span></div></div><div class="score ${homeLead?'leading':''}">${n(g.home.score)}</div></div><div class="divider"></div><div class="analysis"><div class="analysis-cell"><div class="label">Live combined score</div><div class="value">${state==='upcoming'?'—':n(g.home.score)+n(g.away.score)}</div></div><div class="analysis-cell"><div class="label">Model projection</div><div class="value">${projectedTotal===null?'—':projectedTotal}</div></div><div class="analysis-cell"><div class="label">Model projected margin</div><div class="value">${esc(marginText)}</div></div><div class="analysis-cell"><div class="label">Estimated possessions remaining</div><div class="value">${hasPossessions?possessions:'—'}</div></div><div class="analysis-cell"><div class="label">Home / away PPP</div><div class="value">${ppp}</div></div></div>${liveSignalPanel(g,model)}${scoreFlowChart(g)}</div></article>`
 }
-function render(){let list=[...games];if(filter==='live')list=list.filter(g=>statusOf(g)==='live');if(filter==='upcoming')list=list.filter(g=>statusOf(g)==='upcoming');if(filter==='final')list=list.filter(g=>statusOf(g)==='final');list.sort((a,b)=>{const rank=g=>statusOf(g)==='live'?0:statusOf(g)==='upcoming'?1:2;return rank(a)-rank(b)||new Date(a.date)-new Date(b.date)});$('gameCount').textContent=`${list.length} games`;$('games').innerHTML=list.length?list.map(card).join(''):'<div class="empty">No games in this view right now.</div>';}
+function render(){
+  const active=document.activeElement;
+  const editingLine=active?.classList?.contains('live-line-input');
+  const editingKey=editingLine?active.dataset.lineKey:null;
+  const editingValue=editingLine?active.value:null;
+  let list=[...games];
+  if(filter==='live')list=list.filter(g=>statusOf(g)==='live');
+  if(filter==='upcoming')list=list.filter(g=>statusOf(g)==='upcoming');
+  if(filter==='final')list=list.filter(g=>statusOf(g)==='final');
+  list.sort((a,b)=>{const rank=g=>statusOf(g)==='live'?0:statusOf(g)==='upcoming'?1:2;return rank(a)-rank(b)||new Date(a.date)-new Date(b.date)});
+  $('gameCount').textContent=`${list.length} games`;
+  $('games').innerHTML=list.length?list.map(card).join(''):'<div class="empty">No games in this view right now.</div>';
+  if(editingLine){
+    const replacement=[...$('games').querySelectorAll('.live-line-input')].find(input=>input.dataset.lineKey===editingKey);
+    if(replacement){replacement.value=editingValue;replacement.focus();}
+  }
+}
 function metrics(){$('gamesTracked').textContent=games.length;const live=games.filter(g=>statusOf(g)==='live');$('liveGames').textContent=live.length;$('modelProjections').textContent=live.filter(g=>g.totalProjection?.total!==null&&g.totalProjection?.total!==undefined&&Number.isFinite(Number(g.totalProjection.total))).length;}
 function decorateGame(raw,key){
   const detail=detailCache[key][String(raw.id)]||{};
@@ -299,6 +374,19 @@ document.querySelectorAll('.filter').forEach(b=>b.addEventListener('click',()=>{
   render();
 }));
 $('refreshButton').addEventListener('click',loadGames);
+$('games').addEventListener('change',event=>{
+  const input=event.target.closest('.live-line-input');
+  if(!input)return;
+  const key=input.dataset.lineKey;
+  const raw=input.value.trim();
+  if(!raw){delete liveLines[key];}
+  else{
+    const value=Number(raw);
+    if(Number.isFinite(value)&&value>=50&&value<=400)liveLines[key]=value;
+  }
+  saveLiveLines();
+  updateBoard();
+});
 $('exportHistoryButton').addEventListener('click',exportHistory);
 updateHistoryStatus();
 startLiveRefresh();
