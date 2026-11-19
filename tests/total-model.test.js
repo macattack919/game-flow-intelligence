@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { estimatePossessions, extractAdvancedBox, projectLiveTotal, evaluateLiveTotalSignal } from "../lib/total-model.js";
+import { estimatePossessions, extractAdvancedBox, projectLiveTotal, evaluateLiveTotalSignal, projectHalfTeamTotals } from "../lib/total-model.js";
 
 const homeStats = {
   "fieldGoalsMade-fieldGoalsAttempted": "18-40",
@@ -200,4 +200,66 @@ test("uses the team-total label for individual team market comparisons", () => {
   assert.equal(over.direction, "OVER");
   assert.equal(over.edge, 8.5);
   assert.match(over.reason, /live team total/);
+});
+
+
+test("projects both regulation team halves during the first half", () => {
+  const halves = projectHalfTeamTotals({
+    league: "ncaa",
+    state: "in",
+    period: 1,
+    clock: "10:00",
+    periodLengthSeconds: 20 * 60,
+    regulationPeriods: 2,
+    home: { score: 20 },
+    away: { score: 18 },
+    scoringEvents: [],
+    model: { possessionsPerMinute: 1.7, homePPP: 1.1, awayPPP: 1.0 }
+  });
+  assert.equal(halves.currentHalf, 1);
+  assert.equal(halves.home.firstHalf.actual, false);
+  assert.equal(halves.home.firstHalf.points, 38.7);
+  assert.equal(halves.away.firstHalf.points, 35);
+  assert.equal(halves.home.secondHalf.points, 37.4);
+  assert.equal(halves.away.secondHalf.points, 34);
+  assert.ok(["OVER_PACE", "UNDER_PACE", "ON_PACE"].includes(halves.home.firstHalf.pace));
+});
+
+test("tracks completed first-half scores and projects the second half from live scoring", () => {
+  const halves = projectHalfTeamTotals({
+    league: "ncaa",
+    state: "in",
+    period: 2,
+    clock: "15:00",
+    periodLengthSeconds: 20 * 60,
+    regulationPeriods: 2,
+    home: { score: 48 },
+    away: { score: 42 },
+    scoringEvents: [
+      { period: 2, clock: "0:04", sequence: 100, homeScore: 40, awayScore: 34 }
+    ],
+    model: { possessionsPerMinute: 1.8, homePPP: 1.08, awayPPP: 1.0 }
+  });
+  assert.equal(halves.currentHalf, 2);
+  assert.equal(halves.home.firstHalf.points, 40);
+  assert.equal(halves.away.firstHalf.points, 34);
+  assert.equal(halves.home.firstHalf.actual, true);
+  assert.equal(halves.away.secondHalf.points, 37.2);
+  assert.equal(halves.home.secondHalf.actual, false);
+});
+
+test("returns no half split when second-half play-by-play is not available", () => {
+  const halves = projectHalfTeamTotals({
+    league: "nba",
+    state: "in",
+    period: 3,
+    clock: "9:00",
+    periodLengthSeconds: 12 * 60,
+    regulationPeriods: 4,
+    home: { score: 70 },
+    away: { score: 65 },
+    scoringEvents: [],
+    model: { possessionsPerMinute: 2, homePPP: 1.1, awayPPP: 1.0 }
+  });
+  assert.equal(halves, null);
 });
