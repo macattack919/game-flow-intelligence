@@ -44,6 +44,19 @@
 .team-line-label{display:block;font-size:9px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:800}
 .team-line-input{margin-top:4px;font-size:14px;padding:7px 8px}
 .team-total-footnote{font-size:9px;color:var(--muted);margin-top:7px}
+.half-team-panel{margin-top:11px;padding:12px;background:#0a1726;border:1px solid #29415b;border-radius:10px}
+.half-team-header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:9px}
+.half-team-title{font-size:10px;letter-spacing:1.2px;font-weight:850;color:var(--text)}
+.half-team-caption{font-size:9px;color:var(--muted)}
+.half-team-row{display:grid;grid-template-columns:minmax(88px,1fr) repeat(2,minmax(0,1fr));gap:8px;padding:9px 0;border-top:1px solid #20364e;align-items:center}
+.half-team-name{font-size:11px;font-weight:850;color:var(--text)}
+.half-cell{text-align:center;min-width:0}
+.half-cell-label{font-size:9px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:800}
+.half-cell-points{font-size:17px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--cyan);margin-top:2px}
+.half-cell-state{font-size:8px;letter-spacing:.5px;font-weight:850;margin-top:2px;color:var(--muted);white-space:normal}
+.half-cell-state.over{color:var(--green)}.half-cell-state.under{color:var(--amber)}.half-cell-state.on{color:var(--muted)}
+.half-team-footnote{font-size:9px;color:var(--muted);line-height:1.35;margin-top:8px}
+@media(max-width:420px){.half-team-row{grid-template-columns:minmax(75px,.85fr) repeat(2,minmax(0,1fr));gap:5px}.half-cell-points{font-size:15px}}
 @media(max-width:520px){.team-total-row{grid-template-columns:1fr 1fr;gap:7px}.team-total-call{text-align:right}.team-line-label{grid-column:1/-1}.team-line-input{max-width:180px}}
 @media(max-width:420px){.signal-panel{grid-template-columns:1fr}.signal-footnote{margin-top:0}}
 </style>
@@ -60,7 +73,7 @@
   <div class="foot">GAME FLOW INTELLIGENCE <b>•</b> NBA + NCAA MEN'S</div>
 </main>
 <script type="module">
-import { projectLiveTotal, evaluateLiveTotalSignal } from '/lib/total-model.js';
+import { projectLiveTotal, evaluateLiveTotalSignal, projectHalfTeamTotals } from '/lib/total-model.js';
 const REFRESH_MS=5000;const DETAILS_REFRESH_MS=30000;const HISTORY_KEY='gfi_model_history_v1';const LIVE_LINES_KEY='gfi_manual_live_totals_v1';const MAX_HISTORY_ROWS=12000;let league='ncaa',filter='all',games=[],liveLines={};
 const rawLeagueGames={nba:[],ncaa:[]},leagueGames={nba:[],ncaa:[]};
 const detailCache={nba:{},ncaa:{}},lastDetailsFetch={nba:0,ncaa:0};
@@ -112,7 +125,7 @@ function captureHistory(currentGames,currentLeague){
       });
       const latest=[...rows].reverse().find(row=>row.kind==='snapshot'&&row.league===currentLeague&&String(row.eventId)===String(g.id));
       if(latest&&latest.clock===g.clock&&latest.period===g.period&&latest.homeScore===n(g.home.score)&&latest.awayScore===n(g.away.score)&&latest.liveLine===liveLine&&latest.signalStatus===signal.status&&latest.signalEdge===signal.edge&&latest.homeTeamLine===homeTeamLine&&latest.awayTeamLine===awayTeamLine&&latest.homeTeamSignalStatus===homeTeamSignal.status&&latest.homeTeamSignalEdge===homeTeamSignal.edge&&latest.awayTeamSignalStatus===awayTeamSignal.status&&latest.awayTeamSignalEdge===awayTeamSignal.edge)continue;
-      rows.push({kind:'snapshot',capturedAt:now,league:currentLeague,eventId:String(g.id),gameDate:g.date||'',awayTeam:g.away.name,homeTeam:g.home.name,period:n(g.period),clock:g.clock||'',homeScore:n(g.home.score),awayScore:n(g.away.score),combinedScore:n(g.home.score)+n(g.away.score),liveLine,signalStatus:signal.status,signalDirection:signal.direction,signalEdge:signal.edge,homeTeamLine,awayTeamLine,homeTeamSignalStatus:homeTeamSignal.status,homeTeamSignalDirection:homeTeamSignal.direction,homeTeamSignalEdge:homeTeamSignal.edge,awayTeamSignalStatus:awayTeamSignal.status,awayTeamSignalDirection:awayTeamSignal.direction,awayTeamSignalEdge:awayTeamSignal.edge,modelTotal:model.total??null,modelHomeTeamTotal:model.homeProjectedPoints??null,modelAwayTeamTotal:model.awayProjectedPoints??null,modelMethod:model.method||'',modelSample:model.sample||'',possessionsPerTeam:model.possessionsPerTeam??null,projectedRemainingPossessions:model.projectedRemainingPossessions??null,homePPP:model.homePPP??null,awayPPP:model.awayPPP??null});
+      rows.push({kind:'snapshot',capturedAt:now,league:currentLeague,eventId:String(g.id),gameDate:g.date||'',awayTeam:g.away.name,homeTeam:g.home.name,period:n(g.period),clock:g.clock||'',homeScore:n(g.home.score),awayScore:n(g.away.score),combinedScore:n(g.home.score)+n(g.away.score),liveLine,signalStatus:signal.status,signalDirection:signal.direction,signalEdge:signal.edge,homeTeamLine,awayTeamLine,homeTeamSignalStatus:homeTeamSignal.status,homeTeamSignalDirection:homeTeamSignal.direction,homeTeamSignalEdge:homeTeamSignal.edge,awayTeamSignalStatus:awayTeamSignal.status,awayTeamSignalDirection:awayTeamSignal.direction,awayTeamSignalEdge:awayTeamSignal.edge,modelTotal:model.total??null,modelHomeTeamTotal:model.homeProjectedPoints??null,modelAwayTeamTotal:model.awayProjectedPoints??null,firstHalfHomePoints:g.halfTeamTotals?.home?.firstHalf?.points??null,firstHalfAwayPoints:g.halfTeamTotals?.away?.firstHalf?.points??null,firstHalfHomePace:g.halfTeamTotals?.home?.firstHalf?.pace??null,firstHalfAwayPace:g.halfTeamTotals?.away?.firstHalf?.pace??null,secondHalfHomePoints:g.halfTeamTotals?.home?.secondHalf?.points??null,secondHalfAwayPoints:g.halfTeamTotals?.away?.secondHalf?.points??null,secondHalfHomePace:g.halfTeamTotals?.home?.secondHalf?.pace??null,secondHalfAwayPace:g.halfTeamTotals?.away?.secondHalf?.pace??null,modelMethod:model.method||'',modelSample:model.sample||'',possessionsPerTeam:model.possessionsPerTeam??null,projectedRemainingPossessions:model.projectedRemainingPossessions??null,homePPP:model.homePPP??null,awayPPP:model.awayPPP??null});
       changed=true;
     }else if(state==='final'&&!knownFinals.has(key)){
       rows.push({kind:'final',capturedAt:now,league:currentLeague,eventId:String(g.id),gameDate:g.date||'',awayTeam:g.away.name,homeTeam:g.home.name,homeScore:n(g.home.score),awayScore:n(g.away.score),finalTotal:n(g.home.score)+n(g.away.score)});
@@ -129,7 +142,7 @@ function captureHistory(currentGames,currentLeague){
 function exportHistory(){
   const rows=readHistory();if(!rows.length){$('historyStatus').textContent='· No history recorded yet';return}
   const finals=new Map(rows.filter(row=>row.kind==='final').map(row=>[`${row.league}:${row.eventId}`,row]));
-  const columns=['capturedAt','league','eventId','awayTeam','homeTeam','period','clock','awayScore','homeScore','combinedScore','liveLine','signalStatus','signalDirection','signalEdge','modelTotal','modelHomeTeamTotal','modelAwayTeamTotal','homeTeamLine','awayTeamLine','homeTeamSignalStatus','homeTeamSignalDirection','homeTeamSignalEdge','awayTeamSignalStatus','awayTeamSignalDirection','awayTeamSignalEdge','finalTotal','projectionError','absoluteError','modelMethod','modelSample','possessionsPerTeam','projectedRemainingPossessions','homePPP','awayPPP'];
+  const columns=['capturedAt','league','eventId','awayTeam','homeTeam','period','clock','awayScore','homeScore','combinedScore','liveLine','signalStatus','signalDirection','signalEdge','modelTotal','modelHomeTeamTotal','modelAwayTeamTotal','firstHalfHomePoints','firstHalfAwayPoints','firstHalfHomePace','firstHalfAwayPace','secondHalfHomePoints','secondHalfAwayPoints','secondHalfHomePace','secondHalfAwayPace','homeTeamLine','awayTeamLine','homeTeamSignalStatus','homeTeamSignalDirection','homeTeamSignalEdge','awayTeamSignalStatus','awayTeamSignalDirection','awayTeamSignalEdge','finalTotal','projectionError','absoluteError','modelMethod','modelSample','possessionsPerTeam','projectedRemainingPossessions','homePPP','awayPPP'];
   const quote=value=>`"${String(value??'').replace(/"/g,'""')}"`;
   const output=[columns.join(',')];
   for(const row of rows.filter(item=>item.kind==='snapshot')){
@@ -313,6 +326,30 @@ function teamTotalsPanel(g,model){
     <div class="team-total-footnote">Enter each team's current live total separately. Team signals use the same provisional edge thresholds as the game total.</div>
   </section>`;
 }
+function teamHalfTotalsPanel(g,halves){
+  if(statusOf(g)!=='live')return '';
+  if(!halves)return `<section class="half-team-panel"><div class="half-team-header"><div class="half-team-title">HALF-BY-HALF TEAM TOTALS</div><div class="half-team-caption">Waiting for the scoring timeline to split the halves</div></div></section>`;
+  const paceLabel=pace=>pace==='OVER_PACE'?'OVER PACE':pace==='UNDER_PACE'?'UNDER PACE':pace==='ON_PACE'?'ON PACE':'WAITING';
+  const paceClass=pace=>pace==='OVER_PACE'?'over':pace==='UNDER_PACE'?'under':'on';
+  const renderHalf=(half)=>{
+    if(!half||half.points===null||half.points===undefined)return '<div class="half-cell-points">—</div><div class="half-cell-state">UNAVAILABLE</div>';
+    return `<div class="half-cell-points">${Number(half.points).toFixed(1)}</div><div class="half-cell-state ${paceClass(half.pace)}">${paceLabel(half.pace)} · ${half.actual?'ACTUAL':'EST.'}</div>`;
+  };
+  const sides=[
+    {name:g.away.name,team:halves.away},
+    {name:g.home.name,team:halves.home}
+  ];
+  const rows=sides.map(({name,team})=>`<div class="half-team-row">
+    <div class="half-team-name">${esc(name)}</div>
+    <div class="half-cell"><div class="half-cell-label">1st Half</div>${renderHalf(team?.firstHalf)}</div>
+    <div class="half-cell"><div class="half-cell-label">2nd Half</div>${renderHalf(team?.secondHalf)}</div>
+  </div>`).join('');
+  return `<section class="half-team-panel" aria-label="Half by half team scoring estimates">
+    <div class="half-team-header"><div class="half-team-title">HALF-BY-HALF TEAM TOTALS</div><div class="half-team-caption">Estimated / actual points by team</div></div>
+    ${rows}
+    <div class="half-team-footnote">OVER PACE / UNDER PACE compares each half with a typical league team-half scoring baseline. It is not a sportsbook-line comparison or a bet recommendation. Estimates update with the live pace and team efficiency.</div>
+  </section>`;
+}
 function card(g){
   const state=statusOf(g),model=g.totalProjection||null;
   const projectedTotal=model?.total!==null&&model?.total!==undefined&&Number.isFinite(Number(model.total))?Number(model.total):null;
@@ -322,7 +359,7 @@ function card(g){
   const hasPossessions=possessions!==null&&possessions!==undefined&&Number.isFinite(Number(possessions));
   const ppp=model?.homePPP!==null&&model?.awayPPP!==null&&model?.homePPP!==undefined&&model?.awayPPP!==undefined?`${model.homePPP} / ${model.awayPPP}`:'—';
   const homeLead=n(g.home.score)>n(g.away.score),awayLead=n(g.away.score)>n(g.home.score);
-  return `<article class="game ${state==='live'?'live':''}"><div class="game-head"><div class="game-status ${state==='live'?'live':''}">${statusLabel(g)}</div><div class="clock">${esc(fmtPeriod(g))}</div></div><div class="team"><div><div class="team-name">${esc(g.away.name)}<span class="record">${esc(record(g.away))}</span></div></div><div class="score ${awayLead?'leading':''}">${n(g.away.score)}</div></div><div class="team"><div><div class="team-name">${esc(g.home.name)}<span class="record">${esc(record(g.home))}</span></div></div><div class="score ${homeLead?'leading':''}">${n(g.home.score)}</div></div><div class="divider"></div><div class="analysis"><div class="analysis-cell"><div class="label">Live combined score</div><div class="value">${state==='upcoming'?'—':n(g.home.score)+n(g.away.score)}</div></div><div class="analysis-cell"><div class="label">Model projection</div><div class="value">${projectedTotal===null?'—':projectedTotal}</div></div><div class="analysis-cell"><div class="label">Model projected margin</div><div class="value">${esc(marginText)}</div></div><div class="analysis-cell"><div class="label">Estimated possessions remaining</div><div class="value">${hasPossessions?possessions:'—'}</div></div><div class="analysis-cell"><div class="label">Home / away PPP</div><div class="value">${ppp}</div></div></div>${liveSignalPanel(g,model)}${teamTotalsPanel(g,model)}${scoreFlowChart(g)}</div></article>`
+  return `<article class="game ${state==='live'?'live':''}"><div class="game-head"><div class="game-status ${state==='live'?'live':''}">${statusLabel(g)}</div><div class="clock">${esc(fmtPeriod(g))}</div></div><div class="team"><div><div class="team-name">${esc(g.away.name)}<span class="record">${esc(record(g.away))}</span></div></div><div class="score ${awayLead?'leading':''}">${n(g.away.score)}</div></div><div class="team"><div><div class="team-name">${esc(g.home.name)}<span class="record">${esc(record(g.home))}</span></div></div><div class="score ${homeLead?'leading':''}">${n(g.home.score)}</div></div><div class="divider"></div><div class="analysis"><div class="analysis-cell"><div class="label">Live combined score</div><div class="value">${state==='upcoming'?'—':n(g.home.score)+n(g.away.score)}</div></div><div class="analysis-cell"><div class="label">Model projection</div><div class="value">${projectedTotal===null?'—':projectedTotal}</div></div><div class="analysis-cell"><div class="label">Model projected margin</div><div class="value">${esc(marginText)}</div></div><div class="analysis-cell"><div class="label">Estimated possessions remaining</div><div class="value">${hasPossessions?possessions:'—'}</div></div><div class="analysis-cell"><div class="label">Home / away PPP</div><div class="value">${ppp}</div></div></div>${liveSignalPanel(g,model)}${teamTotalsPanel(g,model)}${teamHalfTotalsPanel(g,g.halfTeamTotals)}${scoreFlowChart(g)}</div></article>`
 }
 function render(){
   const active=document.activeElement;
@@ -356,8 +393,21 @@ function decorateGame(raw,key){
     home,
     away
   });
-  return {...raw,home,away,totalProjection,
-    scoringEvents:detail.scoringEvents||[],
+  const scoringEvents=detail.scoringEvents||[];
+  const halfTeamTotals=projectHalfTeamTotals({
+    league:key,
+    state:raw.state||"",
+    period:raw.period||0,
+    clock:raw.clock||"",
+    periodLengthSeconds:raw.periodLengthSeconds,
+    regulationPeriods:raw.regulationPeriods,
+    home,
+    away,
+    scoringEvents,
+    model:totalProjection
+  });
+  return {...raw,home,away,totalProjection,halfTeamTotals,
+    scoringEvents,
     playEvents:detail.playEvents||[]};
 }
 function presentLeague(key){
