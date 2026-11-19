@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { estimatePossessions, extractAdvancedBox, projectLiveTotal } from "../lib/total-model.js";
+import { estimatePossessions, extractAdvancedBox, projectLiveTotal, evaluateLiveTotalSignal } from "../lib/total-model.js";
 
 const homeStats = {
   "fieldGoalsMade-fieldGoalsAttempted": "18-40",
@@ -115,4 +115,64 @@ test("handles an NBA overtime period without adding hypothetical future overtime
   assert.equal(projection.method, "possessions_efficiency");
   assert.equal(projection.elapsedMinutes, 50);
   assert.equal(projection.remainingMinutes, 3);
+});
+
+
+test("flags an over entry window only when model edge reaches the conservative threshold", () => {
+  const signal = evaluateLiveTotalSignal({
+    projection: { total: 154, method: "possessions_efficiency", elapsedMinutes: 20 },
+    liveLine: 145.5,
+    remainingMinutes: 20,
+    scoreMargin: 6
+  });
+  assert.equal(signal.status, "OVER_WINDOW");
+  assert.equal(signal.direction, "OVER");
+  assert.equal(signal.edge, 8.5);
+});
+
+test("flags an under entry window when the model is sufficiently below the live total", () => {
+  const signal = evaluateLiveTotalSignal({
+    projection: { total: 154, method: "possessions_efficiency", elapsedMinutes: 20 },
+    liveLine: 162,
+    remainingMinutes: 20,
+    scoreMargin: 6
+  });
+  assert.equal(signal.status, "UNDER_WINDOW");
+  assert.equal(signal.direction, "UNDER");
+  assert.equal(signal.edge, -8);
+});
+
+test("returns watch rather than entry for a moderate model edge", () => {
+  const signal = evaluateLiveTotalSignal({
+    projection: { total: 154, method: "possessions_efficiency", elapsedMinutes: 20 },
+    liveLine: 149,
+    remainingMinutes: 20,
+    scoreMargin: 6
+  });
+  assert.equal(signal.status, "WATCH_OVER");
+});
+
+test("blocks signals during a scoring surge or a close late-game finish", () => {
+  const projection = { total: 154, method: "possessions_efficiency", elapsedMinutes: 20 };
+  const surge = evaluateLiveTotalSignal({
+    projection, liveLine: 145, remainingMinutes: 5, scoreMargin: 6, recentScoringSurge: true
+  });
+  assert.equal(surge.status, "VOLATILE");
+  const late = evaluateLiveTotalSignal({
+    projection, liveLine: 170, remainingMinutes: 3, scoreMargin: 4
+  });
+  assert.equal(late.status, "LATE_GAME");
+});
+
+test("does not generate an entry from fallback projections or without a live line", () => {
+  const fallback = evaluateLiveTotalSignal({
+    projection: { total: 154, method: "score_pace_fallback", elapsedMinutes: 20 },
+    liveLine: 140, remainingMinutes: 20, scoreMargin: 10
+  });
+  assert.equal(fallback.status, "NO_BET");
+  const missingLine = evaluateLiveTotalSignal({
+    projection: { total: 154, method: "possessions_efficiency", elapsedMinutes: 20 },
+    liveLine: null, remainingMinutes: 20, scoreMargin: 10
+  });
+  assert.equal(missingLine.status, "NEEDS_LINE");
 });
