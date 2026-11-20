@@ -4,10 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#081321">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Game Flow Intelligence</title>
 <style>
 :root{--bg:#081321;--panel:#101f32;--panel2:#152941;--line:#263b53;--text:#edf4fb;--muted:#91a5bb;--blue:#56a8e8;--cyan:#72d5e8;--green:#54d69a;--amber:#f3bd62;--red:#f07878}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#122942 0,#081321 48%);color:var(--text);font:15px/1.45 Inter,system-ui,-apple-system,Segoe UI,sans-serif}header{padding:26px 18px 18px;border-bottom:1px solid var(--line);background:#091726d9}.wrap{max-width:1240px;margin:auto;padding:0 18px}.eyebrow{font-size:10px;letter-spacing:3px;font-weight:800;color:var(--cyan)}h1{margin:5px 0;font-size:clamp(25px,4vw,38px);letter-spacing:-1px}.subtitle{color:var(--muted);font-size:12px;letter-spacing:1.8px}.league-tabs{display:flex;gap:8px;margin:20px 0 16px}.league-tab,.filter,.action{border:1px solid var(--line);background:var(--panel);color:var(--muted);padding:10px 16px;border-radius:10px;font-weight:750;cursor:pointer}.league-tab.active{background:#173d5e;border-color:#3479ae;color:white;box-shadow:inset 0 0 0 1px #56a8e855}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0}.status{font-size:12px;color:var(--muted)}.dot{display:inline-block;width:8px;height:8px;background:var(--green);border-radius:50%;margin-right:7px;box-shadow:0 0 10px #54d69a88}.actions{display:flex;gap:8px}.action{padding:8px 12px}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}.metric,.game,.empty{background:linear-gradient(145deg,#12243a,#0e1c2d);border:1px solid var(--line);border-radius:14px}.metric{padding:14px}.metric-label,.label{font-size:10px;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted);font-weight:750}.metric-value{font-size:27px;font-weight:850;margin-top:4px}.filters{display:flex;gap:7px;flex-wrap:wrap;margin:20px 0}.filter{font-size:12px;padding:7px 12px}.filter.active{background:#1a3854;color:white;border-color:#3976a6}.section-head{display:flex;justify-content:space-between;align-items:center;margin:22px 0 12px}.section-head h2{font-size:16px;margin:0}.section-head span{font-size:12px;color:var(--muted)}.games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.game{padding:16px;min-width:0}.game.live{border-color:#3477a4;box-shadow:0 0 0 1px #3477a422}.game-head{display:flex;justify-content:space-between;gap:10px;margin-bottom:12px}.game-head-right{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}.scores-odds-link{color:var(--cyan);font-size:9px;font-weight:850;letter-spacing:.7px;text-decoration:none;border:1px solid #294761;border-radius:7px;padding:5px 7px;white-space:nowrap}.scores-odds-link:hover{background:#16344d}.game-status{font-size:10px;letter-spacing:1px;color:var(--muted);font-weight:800}.game-status.live{color:var(--green)}.clock{font-size:12px;color:var(--cyan);font-weight:800;text-align:right}.timeout-flag{display:inline-flex;align-items:center;padding:4px 7px;border-radius:6px;border:1px solid #9b5b2f;background:#4b2e1e;color:#ffc17a;font-size:9px;letter-spacing:.7px;font-weight:900;white-space:nowrap}.possession-tag{display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:2px 6px;border-radius:5px;background:#16415a;color:#9be7f2;font-size:9px;letter-spacing:.7px;font-weight:900;vertical-align:middle}.possession-tag{padding:0;background:transparent;border:0;border-radius:0;margin-left:7px;color:var(--cyan);font-size:13px;line-height:1;box-shadow:none}.team-indicators{display:flex;align-items:center;gap:8px;min-height:11px;margin-top:5px}.timeout-dots{display:inline-flex;align-items:center;gap:4px}.timeout-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 4px #72d5e855}.timeout-dot.spent{background:#47586b;box-shadow:none;opacity:.85}.timeout-unknown{font-size:8px;color:var(--muted);letter-spacing:.5px}.bonus-mark{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:14px;padding:0 3px;border:1px solid #b88944;border-radius:4px;background:#3e301b;color:#ffd28a;font-size:8px;line-height:1;font-weight:900;letter-spacing:.3px}.possession-unknown{display:inline-flex;align-items:center;margin-left:6px;padding:2px 6px;border-radius:5px;border:1px solid #42566b;color:var(--muted);font-size:8px;letter-spacing:.6px;font-weight:800;vertical-align:middle}.team{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;padding:8px 0}.team-name{font-weight:750}.record{font-size:11px;color:var(--muted);font-weight:500;margin-left:5px}.score{font-size:27px;font-weight:850;font-variant-numeric:tabular-nums}.score.leading{color:var(--cyan)}.divider{height:1px;background:var(--line);margin:8px 0 12px}.analysis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.analysis-cell{background:#0a1726;border:1px solid #20364e;border-radius:9px;padding:9px}.analysis-cell .value{font-size:17px;font-weight:800;margin-top:3px}.value.good{color:var(--green)}.value.warn{color:var(--amber)}.momentum{margin-top:10px;padding:10px;background:#0a1726;border-radius:9px;color:var(--muted);font-size:12px}.momentum strong{color:var(--text)}.scoring{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.chip{font-size:10px;padding:3px 6px;border-radius:5px;background:#1b3851;color:#b8d8f0}.empty{padding:28px;text-align:center;color:var(--muted);grid-column:1/-1}.foot{padding:28px 0 34px;text-align:center;color:var(--muted);font-size:10px;letter-spacing:2px}.foot b{color:var(--cyan)}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#122942 0,#081321 48%);color:var(--text);font:15px/1.45 Inter,system-ui,-apple-system,Segoe UI,sans-serif}header{padding:26px 18px 18px;border-bottom:1px solid var(--line);background:#091726d9}.wrap{max-width:1240px;margin:auto;padding:0 18px}.eyebrow{font-size:10px;letter-spacing:3px;font-weight:800;color:var(--cyan)}h1{margin:5px 0;font-size:clamp(25px,4vw,38px);letter-spacing:-1px}.subtitle{color:var(--muted);font-size:12px;letter-spacing:1.8px}.league-tabs{display:flex;gap:8px;margin:20px 0 16px}.league-tab,.filter,.action{border:1px solid var(--line);background:var(--panel);color:var(--muted);padding:10px 16px;border-radius:10px;font-weight:750;cursor:pointer}.league-tab.active{background:#173d5e;border-color:#3479ae;color:white;box-shadow:inset 0 0 0 1px #56a8e855}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0}.status{font-size:12px;color:var(--muted)}.dot{display:inline-block;width:8px;height:8px;background:var(--green);border-radius:50%;margin-right:7px;box-shadow:0 0 10px #54d69a88}.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.alert-status{font-size:10px;color:var(--muted)}.action.enabled{border-color:#3479ae;background:#173d5e;color:#d9f4ff}.action{padding:8px 12px}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}.metric,.game,.empty{background:linear-gradient(145deg,#12243a,#0e1c2d);border:1px solid var(--line);border-radius:14px}.metric{padding:14px}.metric-label,.label{font-size:10px;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted);font-weight:750}.metric-value{font-size:27px;font-weight:850;margin-top:4px}.filters{display:flex;gap:7px;flex-wrap:wrap;margin:20px 0}.filter{font-size:12px;padding:7px 12px}.filter.active{background:#1a3854;color:white;border-color:#3976a6}.section-head{display:flex;justify-content:space-between;align-items:center;margin:22px 0 12px}.section-head h2{font-size:16px;margin:0}.section-head span{font-size:12px;color:var(--muted)}.games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.game{padding:16px;min-width:0}.game.live{border-color:#3477a4;box-shadow:0 0 0 1px #3477a422}.game-head{display:flex;justify-content:space-between;gap:10px;margin-bottom:12px}.game-head-right{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}.scores-odds-link{color:var(--cyan);font-size:9px;font-weight:850;letter-spacing:.7px;text-decoration:none;border:1px solid #294761;border-radius:7px;padding:5px 7px;white-space:nowrap}.scores-odds-link:hover{background:#16344d}.game-status{font-size:10px;letter-spacing:1px;color:var(--muted);font-weight:800}.game-status.live{color:var(--green)}.clock{font-size:12px;color:var(--cyan);font-weight:800;text-align:right}.timeout-flag{display:inline-flex;align-items:center;padding:4px 7px;border-radius:6px;border:1px solid #9b5b2f;background:#4b2e1e;color:#ffc17a;font-size:9px;letter-spacing:.7px;font-weight:900;white-space:nowrap}.possession-tag{display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:2px 6px;border-radius:5px;background:#16415a;color:#9be7f2;font-size:9px;letter-spacing:.7px;font-weight:900;vertical-align:middle}.possession-tag{padding:0;background:transparent;border:0;border-radius:0;margin-left:7px;color:var(--cyan);font-size:13px;line-height:1;box-shadow:none}.team-indicators{display:flex;align-items:center;gap:8px;min-height:11px;margin-top:5px}.timeout-dots{display:inline-flex;align-items:center;gap:4px}.timeout-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 4px #72d5e855}.timeout-dot.spent{background:#47586b;box-shadow:none;opacity:.85}.timeout-unknown{font-size:8px;color:var(--muted);letter-spacing:.5px}.bonus-mark{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:14px;padding:0 3px;border:1px solid #b88944;border-radius:4px;background:#3e301b;color:#ffd28a;font-size:8px;line-height:1;font-weight:900;letter-spacing:.3px}.possession-unknown{display:inline-flex;align-items:center;margin-left:6px;padding:2px 6px;border-radius:5px;border:1px solid #42566b;color:var(--muted);font-size:8px;letter-spacing:.6px;font-weight:800;vertical-align:middle}.team{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;padding:8px 0}.team-name{font-weight:750}.record{font-size:11px;color:var(--muted);font-weight:500;margin-left:5px}.score{font-size:27px;font-weight:850;font-variant-numeric:tabular-nums}.score.leading{color:var(--cyan)}.divider{height:1px;background:var(--line);margin:8px 0 12px}.analysis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.analysis-cell{background:#0a1726;border:1px solid #20364e;border-radius:9px;padding:9px}.analysis-cell .value{font-size:17px;font-weight:800;margin-top:3px}.value.good{color:var(--green)}.value.warn{color:var(--amber)}.momentum{margin-top:10px;padding:10px;background:#0a1726;border-radius:9px;color:var(--muted);font-size:12px}.momentum strong{color:var(--text)}.scoring{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}.chip{font-size:10px;padding:3px 6px;border-radius:5px;background:#1b3851;color:#b8d8f0}.empty{padding:28px;text-align:center;color:var(--muted);grid-column:1/-1}.foot{padding:28px 0 34px;text-align:center;color:var(--muted);font-size:10px;letter-spacing:2px}.foot b{color:var(--cyan)}
 @media(max-width:760px){.games{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}@media(max-width:420px){.analysis{grid-template-columns:repeat(2,1fr)}.wrap{padding:0 12px}.game{padding:13px}}
 
 .flow-chart-wrap{margin-top:12px;padding:11px 10px 8px;background:#0a1726;border:1px solid #20364e;border-radius:10px}
@@ -82,7 +84,7 @@
 <header><div class="wrap"><div class="eyebrow">LIVE BASKETBALL ANALYTICS</div><h1>GAME FLOW <span style="color:var(--cyan)">INTELLIGENCE</span></h1><div class="subtitle">LIVE SCORING FLOW • OVER/UNDER ANALYSIS</div></div></header>
 <main class="wrap">
   <nav class="league-tabs" aria-label="League selection"><button class="league-tab active" data-league="ncaa">NCAA MEN'S</button><button class="league-tab" data-league="nba">NBA</button></nav>
-  <div class="toolbar"><div class="status"><span class="dot"></span><span id="updateStatus">Connecting to ESPN…</span><span id="historyStatus" style="margin-left:10px"></span></div><div class="actions"><button class="action" id="exportHistoryButton">↓ Export Log</button><button class="action" id="refreshButton">↻ Refresh</button></div></div>
+  <div class="toolbar"><div class="status"><span class="dot"></span><span id="updateStatus">Connecting to ESPN…</span><span id="historyStatus" style="margin-left:10px"></span></div><div class="actions"><button class="action" id="tripleDipperAlertsButton" type="button">Enable Triple Dipper Alerts</button><span class="alert-status" id="alertStatus">Alerts off</span><button class="action" id="exportHistoryButton">↓ Export Log</button><button class="action" id="refreshButton">↻ Refresh</button></div></div>
   <section class="metrics"><div class="metric"><div class="metric-label">Games Today</div><div class="metric-value" id="gamesTracked">—</div></div><div class="metric"><div class="metric-label">Live Games</div><div class="metric-value" id="liveGames">—</div></div><div class="metric"><div class="metric-label">Model Projections</div><div class="metric-value" id="modelProjections">—</div></div></section>
   <div class="filters"><button class="filter active" data-filter="all">All Games</button><button class="filter" data-filter="live">Live</button><button class="filter" data-filter="upcoming">Upcoming</button><button class="filter" data-filter="final">Final</button></div>
   <div class="section-head"><h2 id="boardTitle">NCAA Men's Game Monitor</h2><span id="gameCount">0 games</span></div>
@@ -108,9 +110,9 @@
   <div class="foot">GAME FLOW INTELLIGENCE <b>•</b> NBA + NCAA MEN'S</div>
 </main>
 <script type="module">
-import { projectLiveTotal, evaluateLiveTotalSignal, projectHalfTeamTotals } from '/lib/total-model.js';
+import { projectLiveTotal, evaluateLiveTotalSignal, evaluateTripleDipperSignal, projectHalfTeamTotals } from '/lib/total-model.js';
 import { buildLiveContext, buildScoreboardStatus } from '/lib/live-context.js';
-const REFRESH_MS=5000;const DETAILS_REFRESH_MS=30000;const HISTORY_KEY='gfi_model_history_v1';const LIVE_LINES_KEY='gfi_manual_live_totals_v1';const MAX_HISTORY_ROWS=12000;let league='ncaa',filter='all',games=[],liveLines={};
+const REFRESH_MS=5000;const DETAILS_REFRESH_MS=30000;const HISTORY_KEY='gfi_model_history_v1';const LIVE_LINES_KEY='gfi_manual_live_totals_v1';const MAX_HISTORY_ROWS=12000;const TRIPLE_ALERTS_KEY='gfi_triple_dipper_alerts_enabled_v1';const TRIPLE_ALERTED_KEY='gfi_triple_dipper_alerted_v1';let notificationRegistration=null;const pendingTripleAlerts=new Set();let league='ncaa',filter='all',games=[],liveLines={};
 const rawLeagueGames={nba:[],ncaa:[]},leagueGames={nba:[],ncaa:[]};
 const detailCache={nba:{},ncaa:{}},lastDetailsFetch={nba:0,ncaa:0};
 const scoreboardLoading={nba:false,ncaa:false},detailsLoading={nba:false,ncaa:false};
@@ -120,6 +122,82 @@ function readHistory(){try{const rows=JSON.parse(localStorage.getItem(HISTORY_KE
 function writeHistory(rows){try{localStorage.setItem(HISTORY_KEY,JSON.stringify(rows.slice(-MAX_HISTORY_ROWS)));return true}catch(e){console.warn('History log storage is full or unavailable',e);return false}}
 function readLiveLines(){try{const values=JSON.parse(localStorage.getItem(LIVE_LINES_KEY)||'{}');return values&&typeof values==='object'&&!Array.isArray(values)?values:{}}catch(e){console.warn('Saved live totals could not be read',e);return {}}}
 function saveLiveLines(){try{localStorage.setItem(LIVE_LINES_KEY,JSON.stringify(liveLines));return true}catch(e){console.warn('Live totals could not be saved',e);return false}}
+
+function readAlertedTripleDippers(){try{const values=JSON.parse(localStorage.getItem(TRIPLE_ALERTED_KEY)||'[]');return Array.isArray(values)?values:[]}catch(e){return []}}
+function saveAlertedTripleDippers(values){try{localStorage.setItem(TRIPLE_ALERTED_KEY,JSON.stringify(values.slice(-400)));}catch(e){console.warn('Triple Dipper alert history could not be saved',e)}}
+function updateTripleAlertControls(){
+  const button=$('tripleDipperAlertsButton');if(!button)return;
+  const enabled=localStorage.getItem(TRIPLE_ALERTS_KEY)==='true'&&('Notification' in window)&&Notification.permission==='granted';
+  button.textContent=enabled?'Disable Triple Dipper Alerts':'Enable Triple Dipper Alerts';
+  button.classList.toggle('enabled',enabled);
+  $('alertStatus').textContent=enabled?'On · keep GFI open during games':'Alerts off';
+}
+function checkTripleDipperAlerts(ncaaGames){
+  if(localStorage.getItem(TRIPLE_ALERTS_KEY)!=='true'||!('Notification' in window)||Notification.permission!=='granted'||!notificationRegistration)return;
+  const alerted=new Set(readAlertedTripleDippers());
+  for(const g of (ncaaGames||[])){
+    if(statusOf(g)!=='live')continue;
+    const model=g.totalProjection||{};
+    const line=liveLines[liveLineKey(g,'ncaa')]??null;
+    const signal=evaluateTripleDipperSignal({
+      league:'ncaa',state:g.state,period:g.period,regulationPeriods:g.regulationPeriods,
+      elapsedMinutes:model.elapsedMinutes,remainingMinutes:model.remainingMinutes,
+      homeScore:g.home.score,awayScore:g.away.score,liveLine:line
+    });
+    if(signal.status!=='TRIPLE_DIPPER_UNDER')continue;
+    const key='ncaa:'+String(g.id);
+    if(alerted.has(key)||pendingTripleAlerts.has(key))continue;
+    pendingTripleAlerts.add(key);
+    const body=g.away.name+' '+n(g.away.score)+' · '+g.home.name+' '+n(g.home.score)+
+      ' | '+fmtPeriod(g)+' | Live total '+signal.liveLine+
+      ' | Needed '+signal.neededPpm.toFixed(2)+' PPM · pace '+signal.actualPpm.toFixed(2)+' PPM';
+    notificationRegistration.showNotification('TRIPLE DIPPER UNDER',{
+      body,tag:'gfi-'+key,requireInteraction:true,data:{url:'/'}
+    }).then(()=>{
+      alerted.add(key);saveAlertedTripleDippers([...alerted]);
+    }).catch(error=>console.warn('Triple Dipper notification could not be shown',error))
+      .finally(()=>pendingTripleAlerts.delete(key));
+  }
+}
+async function toggleTripleDipperAlerts(){
+  const enabled=localStorage.getItem(TRIPLE_ALERTS_KEY)==='true';
+  if(enabled){localStorage.removeItem(TRIPLE_ALERTS_KEY);updateTripleAlertControls();return;}
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  if(isIOS&&!standalone){
+    $('alertStatus').textContent='On iPhone: Share → Add to Home Screen, open the GFI icon, then enable alerts.';
+    return;
+  }
+  if(!window.isSecureContext||!('Notification' in window)||!('serviceWorker' in navigator)){
+    $('alertStatus').textContent='This browser does not support GFI browser alerts.';
+    return;
+  }
+  try{
+    const permission=Notification.permission==='granted'?'granted':await Notification.requestPermission();
+    if(permission!=='granted'){$('alertStatus').textContent='Notification permission was not granted.';return;}
+    notificationRegistration=await navigator.serviceWorker.register('/service-worker.js');
+    await navigator.serviceWorker.ready;
+    localStorage.setItem(TRIPLE_ALERTS_KEY,'true');
+    updateTripleAlertControls();
+    await notificationRegistration.showNotification('GFI Triple Dipper alerts enabled',{
+      body:'You will be notified when a live NCAA game meets every Triple Dipper condition.',
+      tag:'gfi-triple-dipper-enabled'
+    });
+    checkTripleDipperAlerts(leagueGames.ncaa);
+  }catch(error){
+    console.warn('Triple Dipper alerts could not be enabled',error);
+    $('alertStatus').textContent='Could not enable alerts in this browser.';
+  }
+}
+function restoreTripleDipperAlerts(){
+  updateTripleAlertControls();
+  if(localStorage.getItem(TRIPLE_ALERTS_KEY)==='true'&&('Notification' in window)&&Notification.permission==='granted'&&'serviceWorker' in navigator){
+    navigator.serviceWorker.register('/service-worker.js').then(registration=>{
+      notificationRegistration=registration;checkTripleDipperAlerts(leagueGames.ncaa);updateTripleAlertControls();
+    }).catch(error=>console.warn('Could not restore GFI alert service worker',error));
+  }
+}
+
 function liveLineKey(g,key=league){return `${key}:${g.id}`}
 function liveTeamLineKey(g,side,key=league){return `${key}:${g.id}:team:${side}`}
 liveLines=readLiveLines();
@@ -143,6 +221,11 @@ function captureHistory(currentGames,currentLeague){
         scoreMargin,
         recentScoringSurge
       });
+      const tripleDipperSignal=evaluateTripleDipperSignal({
+        league:currentLeague,state:g.state,period:g.period,regulationPeriods:g.regulationPeriods,
+        elapsedMinutes:model.elapsedMinutes,remainingMinutes:model.remainingMinutes,
+        homeScore:g.home.score,awayScore:g.away.score,liveLine
+      });
       const homeTeamSignal=evaluateLiveTotalSignal({
         projection:model&&model.homeProjectedPoints!==null&&model.homeProjectedPoints!==undefined&&Number.isFinite(Number(model.homeProjectedPoints))?{...model,total:Number(model.homeProjectedPoints)}:null,
         liveLine:homeTeamLine,
@@ -160,8 +243,8 @@ function captureHistory(currentGames,currentLeague){
         marketLabel:'team total'
       });
       const latest=[...rows].reverse().find(row=>row.kind==='snapshot'&&row.league===currentLeague&&String(row.eventId)===String(g.id));
-      if(latest&&latest.clock===g.clock&&latest.period===g.period&&latest.homeScore===n(g.home.score)&&latest.awayScore===n(g.away.score)&&latest.liveLine===liveLine&&latest.signalStatus===signal.status&&latest.signalEdge===signal.edge&&latest.homeTeamLine===homeTeamLine&&latest.awayTeamLine===awayTeamLine&&latest.homeTeamSignalStatus===homeTeamSignal.status&&latest.homeTeamSignalEdge===homeTeamSignal.edge&&latest.awayTeamSignalStatus===awayTeamSignal.status&&latest.awayTeamSignalEdge===awayTeamSignal.edge)continue;
-      rows.push({kind:'snapshot',capturedAt:now,league:currentLeague,eventId:String(g.id),gameDate:g.date||'',awayTeam:g.away.name,homeTeam:g.home.name,period:n(g.period),clock:g.clock||'',homeScore:n(g.home.score),awayScore:n(g.away.score),combinedScore:n(g.home.score)+n(g.away.score),liveLine,signalStatus:signal.status,signalDirection:signal.direction,signalEdge:signal.edge,homeTeamLine,awayTeamLine,homeTeamSignalStatus:homeTeamSignal.status,homeTeamSignalDirection:homeTeamSignal.direction,homeTeamSignalEdge:homeTeamSignal.edge,awayTeamSignalStatus:awayTeamSignal.status,awayTeamSignalDirection:awayTeamSignal.direction,awayTeamSignalEdge:awayTeamSignal.edge,modelTotal:model.total??null,modelHomeTeamTotal:model.homeProjectedPoints??null,modelAwayTeamTotal:model.awayProjectedPoints??null,firstHalfHomePoints:g.halfTeamTotals?.home?.firstHalf?.points??null,firstHalfAwayPoints:g.halfTeamTotals?.away?.firstHalf?.points??null,firstHalfHomePace:g.halfTeamTotals?.home?.firstHalf?.pace??null,firstHalfAwayPace:g.halfTeamTotals?.away?.firstHalf?.pace??null,secondHalfHomePoints:g.halfTeamTotals?.home?.secondHalf?.points??null,secondHalfAwayPoints:g.halfTeamTotals?.away?.secondHalf?.points??null,secondHalfHomePace:g.halfTeamTotals?.home?.secondHalf?.pace??null,secondHalfAwayPace:g.halfTeamTotals?.away?.secondHalf?.pace??null,modelMethod:model.method||'',modelSample:model.sample||'',possessionsPerTeam:model.possessionsPerTeam??null,basePossessionsPerMinute:model.basePossessionsPerMinute??null,recentPossessionsPerMinute:model.recentPossessionsPerMinute??null,recentPaceWindowMinutes:model.recentPaceWindowMinutes??null,projectedRemainingPossessions:model.projectedRemainingPossessions??null,homePPP:model.homePPP??null,awayPPP:model.awayPPP??null,homeEffectiveFGPct:model.homeShootingProfile?.effectiveFieldGoalPct??null,awayEffectiveFGPct:model.awayShootingProfile?.effectiveFieldGoalPct??null,homeThreePointPct:model.homeShootingProfile?.threePointPct??null,awayThreePointPct:model.awayShootingProfile?.threePointPct??null,homeFreeThrowPct:model.homeShootingProfile?.freeThrowPct??null,awayFreeThrowPct:model.awayShootingProfile?.freeThrowPct??null,homeFoulsThisSegment:g.foulContext?.homeFouls??null,awayFoulsThisSegment:g.foulContext?.awayFouls??null,homeOffenseBonus:g.foulContext?.homeOffense?.label??null,awayOffenseBonus:g.foulContext?.awayOffense?.label??null});
+      if(latest&&latest.clock===g.clock&&latest.period===g.period&&latest.homeScore===n(g.home.score)&&latest.awayScore===n(g.away.score)&&latest.liveLine===liveLine&&latest.signalStatus===signal.status&&latest.signalEdge===signal.edge&&latest.tripleDipperStatus===tripleDipperSignal.status&&latest.tripleDipperNeededPpm===tripleDipperSignal.neededPpm&&latest.tripleDipperGapPpm===tripleDipperSignal.gapPpm&&latest.homeTeamLine===homeTeamLine&&latest.awayTeamLine===awayTeamLine&&latest.homeTeamSignalStatus===homeTeamSignal.status&&latest.homeTeamSignalEdge===homeTeamSignal.edge&&latest.awayTeamSignalStatus===awayTeamSignal.status&&latest.awayTeamSignalEdge===awayTeamSignal.edge)continue;
+      rows.push({kind:'snapshot',capturedAt:now,league:currentLeague,eventId:String(g.id),gameDate:g.date||'',awayTeam:g.away.name,homeTeam:g.home.name,period:n(g.period),clock:g.clock||'',homeScore:n(g.home.score),awayScore:n(g.away.score),combinedScore:n(g.home.score)+n(g.away.score),liveLine,signalStatus:signal.status,signalDirection:signal.direction,signalEdge:signal.edge,tripleDipperStatus:tripleDipperSignal.status,tripleDipperNeededPpm:tripleDipperSignal.neededPpm??null,tripleDipperActualPpm:tripleDipperSignal.actualPpm??null,tripleDipperGapPpm:tripleDipperSignal.gapPpm??null,homeTeamLine,awayTeamLine,homeTeamSignalStatus:homeTeamSignal.status,homeTeamSignalDirection:homeTeamSignal.direction,homeTeamSignalEdge:homeTeamSignal.edge,awayTeamSignalStatus:awayTeamSignal.status,awayTeamSignalDirection:awayTeamSignal.direction,awayTeamSignalEdge:awayTeamSignal.edge,modelTotal:model.total??null,modelHomeTeamTotal:model.homeProjectedPoints??null,modelAwayTeamTotal:model.awayProjectedPoints??null,firstHalfHomePoints:g.halfTeamTotals?.home?.firstHalf?.points??null,firstHalfAwayPoints:g.halfTeamTotals?.away?.firstHalf?.points??null,firstHalfHomePace:g.halfTeamTotals?.home?.firstHalf?.pace??null,firstHalfAwayPace:g.halfTeamTotals?.away?.firstHalf?.pace??null,secondHalfHomePoints:g.halfTeamTotals?.home?.secondHalf?.points??null,secondHalfAwayPoints:g.halfTeamTotals?.away?.secondHalf?.points??null,secondHalfHomePace:g.halfTeamTotals?.home?.secondHalf?.pace??null,secondHalfAwayPace:g.halfTeamTotals?.away?.secondHalf?.pace??null,modelMethod:model.method||'',modelSample:model.sample||'',possessionsPerTeam:model.possessionsPerTeam??null,basePossessionsPerMinute:model.basePossessionsPerMinute??null,recentPossessionsPerMinute:model.recentPossessionsPerMinute??null,recentPaceWindowMinutes:model.recentPaceWindowMinutes??null,projectedRemainingPossessions:model.projectedRemainingPossessions??null,homePPP:model.homePPP??null,awayPPP:model.awayPPP??null,homeEffectiveFGPct:model.homeShootingProfile?.effectiveFieldGoalPct??null,awayEffectiveFGPct:model.awayShootingProfile?.effectiveFieldGoalPct??null,homeThreePointPct:model.homeShootingProfile?.threePointPct??null,awayThreePointPct:model.awayShootingProfile?.threePointPct??null,homeFreeThrowPct:model.homeShootingProfile?.freeThrowPct??null,awayFreeThrowPct:model.awayShootingProfile?.freeThrowPct??null,homeFoulsThisSegment:g.foulContext?.homeFouls??null,awayFoulsThisSegment:g.foulContext?.awayFouls??null,homeOffenseBonus:g.foulContext?.homeOffense?.label??null,awayOffenseBonus:g.foulContext?.awayOffense?.label??null});
       changed=true;
     }else if(state==='final'&&!knownFinals.has(key)){
       rows.push({kind:'final',capturedAt:now,league:currentLeague,eventId:String(g.id),gameDate:g.date||'',awayTeam:g.away.name,homeTeam:g.home.name,homeScore:n(g.home.score),awayScore:n(g.away.score),finalTotal:n(g.home.score)+n(g.away.score)});
@@ -178,7 +261,7 @@ function captureHistory(currentGames,currentLeague){
 function exportHistory(){
   const rows=readHistory();if(!rows.length){$('historyStatus').textContent='· No history recorded yet';return}
   const finals=new Map(rows.filter(row=>row.kind==='final').map(row=>[`${row.league}:${row.eventId}`,row]));
-  const columns=['capturedAt','league','eventId','awayTeam','homeTeam','period','clock','awayScore','homeScore','combinedScore','liveLine','signalStatus','signalDirection','signalEdge','modelTotal','modelHomeTeamTotal','modelAwayTeamTotal','firstHalfHomePoints','firstHalfAwayPoints','firstHalfHomePace','firstHalfAwayPace','secondHalfHomePoints','secondHalfAwayPoints','secondHalfHomePace','secondHalfAwayPace','homeTeamLine','awayTeamLine','homeTeamSignalStatus','homeTeamSignalDirection','homeTeamSignalEdge','awayTeamSignalStatus','awayTeamSignalDirection','awayTeamSignalEdge','finalTotal','projectionError','absoluteError','modelMethod','modelSample','possessionsPerTeam','basePossessionsPerMinute','recentPossessionsPerMinute','recentPaceWindowMinutes','projectedRemainingPossessions','homePPP','awayPPP','homeEffectiveFGPct','awayEffectiveFGPct','homeThreePointPct','awayThreePointPct','homeFreeThrowPct','awayFreeThrowPct','homeFoulsThisSegment','awayFoulsThisSegment','homeOffenseBonus','awayOffenseBonus'];
+  const columns=['capturedAt','league','eventId','awayTeam','homeTeam','period','clock','awayScore','homeScore','combinedScore','liveLine','signalStatus','signalDirection','signalEdge','tripleDipperStatus','tripleDipperNeededPpm','tripleDipperActualPpm','tripleDipperGapPpm','modelTotal','modelHomeTeamTotal','modelAwayTeamTotal','firstHalfHomePoints','firstHalfAwayPoints','firstHalfHomePace','firstHalfAwayPace','secondHalfHomePoints','secondHalfAwayPoints','secondHalfHomePace','secondHalfAwayPace','homeTeamLine','awayTeamLine','homeTeamSignalStatus','homeTeamSignalDirection','homeTeamSignalEdge','awayTeamSignalStatus','awayTeamSignalDirection','awayTeamSignalEdge','finalTotal','projectionError','absoluteError','modelMethod','modelSample','possessionsPerTeam','basePossessionsPerMinute','recentPossessionsPerMinute','recentPaceWindowMinutes','projectedRemainingPossessions','homePPP','awayPPP','homeEffectiveFGPct','awayEffectiveFGPct','homeThreePointPct','awayThreePointPct','homeFreeThrowPct','awayFreeThrowPct','homeFoulsThisSegment','awayFoulsThisSegment','homeOffenseBonus','awayOffenseBonus'];
   const quote=value=>`"${String(value??'').replace(/"/g,'""')}"`;
   const output=[columns.join(',')];
   for(const row of rows.filter(item=>item.kind==='snapshot')){
@@ -437,6 +520,28 @@ function liveSignalPanel(g,model){
     <div class="signal-footnote">Manual total only · odds/juice are not included · signals are provisional and not calibrated yet</div>
   </section>`;
 }
+
+function tripleDipperPanel(g){
+  if(statusOf(g)!=='live'||g.league!=='ncaa')return '';
+  const model=g.totalProjection||{};
+  const elapsed=Number(model.elapsedMinutes);
+  if(!Number.isFinite(elapsed)||elapsed<19||elapsed>33)return '';
+  const line=liveLines[liveLineKey(g,'ncaa')]??null;
+  const signal=evaluateTripleDipperSignal({
+    league:'ncaa',state:g.state,period:g.period,regulationPeriods:g.regulationPeriods,
+    elapsedMinutes:model.elapsedMinutes,remainingMinutes:model.remainingMinutes,
+    homeScore:g.home.score,awayScore:g.away.score,liveLine:line
+  });
+  const active=signal.status==='TRIPLE_DIPPER_UNDER';
+  const metrics=signal.neededPpm===undefined?'':('Needed '+signal.neededPpm.toFixed(2)+' PPM · Pace '+signal.actualPpm.toFixed(2)+' PPM · Gap '+signal.gapPpm.toFixed(2));
+  return '<section class="signal-panel" aria-label="Triple Dipper under signal" style="border-color:'+(active?'#b64b91':'#29415b')+'">'+
+    '<div><div class="signal-kicker">Take The Live Under · Triple Dipper</div>'+
+    '<div class="signal-state '+(active?'under':'neutral')+'">'+esc(signal.label)+'</div>'+
+    '<div class="signal-reason">'+esc(signal.reason)+'</div>'+
+    (metrics?'<div class="signal-gap">'+esc(metrics)+'</div>':'')+
+    '</div><div class="signal-footnote">NCAA only · minutes 20–32 · needed pace ≥4.7 · gap ≥1.3 · lead >8 · no overtime · uses the live total entered above</div></section>';
+}
+
 function teamTotalsPanel(g,model){
   if(statusOf(g)!=='live')return '';
   const recentScoringSurge=hasRecentScoringSurge(g);
@@ -529,7 +634,7 @@ function card(g){
   const awayPossession=state==='live'&&context.possession?.teamId===String(g.away.id)?'<span class="possession-tag" title="Possession">▶</span>':'';
   const homePossession=state==='live'&&context.possession?.teamId===String(g.home.id)?'<span class="possession-tag" title="Possession">▶</span>':'';
 
-  return `<article class="game ${state==='live'?'live':''}"><div class="game-head"><div class="game-status ${state==='live'?'live':''}">${statusLabel(g)}</div><div class="game-head-right"><a class="scores-odds-link" href="${scoresAndOddsBoardUrl()}" target="_blank" rel="noopener noreferrer" aria-label="Open Scores and Odds ${league==='nba'?'NBA':'NCAA'} odds board">S&O ODDS ↗</a><div class="clock">${esc(fmtPeriod(g))}</div>${timeoutBadge}</div></div><div class="team"><div><div class="team-name">${esc(g.away.name)}<span class="record">${esc(record(g.away))}</span>${awayPossession}</div>${state==='live'?teamScoreIndicators(g.scoreboardStatus?.away):''}</div><div class="score ${awayLead?'leading':''}">${n(g.away.score)}</div></div><div class="team"><div><div class="team-name">${esc(g.home.name)}<span class="record">${esc(record(g.home))}</span>${homePossession}</div>${state==='live'?teamScoreIndicators(g.scoreboardStatus?.home):''}</div><div class="score ${homeLead?'leading':''}">${n(g.home.score)}</div></div><div class="divider"></div><div class="analysis"><div class="analysis-cell"><div class="label">Live combined score</div><div class="value">${state==='upcoming'?'—':n(g.home.score)+n(g.away.score)}</div></div><div class="analysis-cell"><div class="label">Model projection</div><div class="value">${projectedTotal===null?'—':projectedTotal}</div></div><div class="analysis-cell"><div class="label">Model projected margin</div><div class="value">${esc(marginText)}</div></div><div class="analysis-cell"><div class="label">Estimated possessions remaining</div><div class="value">${hasPossessions?possessions:'—'}</div></div><div class="analysis-cell"><div class="label">Home / away PPP</div><div class="value">${ppp}</div></div></div>${liveFactorsPanel(g,model,g.foulContext)}${liveSignalPanel(g,model)}${teamTotalsPanel(g,model)}${teamHalfTotalsPanel(g,g.halfTeamTotals)}${scoreFlowChart(g)}</div></article>`
+  return `<article class="game ${state==='live'?'live':''}"><div class="game-head"><div class="game-status ${state==='live'?'live':''}">${statusLabel(g)}</div><div class="game-head-right"><a class="scores-odds-link" href="${scoresAndOddsBoardUrl()}" target="_blank" rel="noopener noreferrer" aria-label="Open Scores and Odds ${league==='nba'?'NBA':'NCAA'} odds board">S&O ODDS ↗</a><div class="clock">${esc(fmtPeriod(g))}</div>${timeoutBadge}</div></div><div class="team"><div><div class="team-name">${esc(g.away.name)}<span class="record">${esc(record(g.away))}</span>${awayPossession}</div>${state==='live'?teamScoreIndicators(g.scoreboardStatus?.away):''}</div><div class="score ${awayLead?'leading':''}">${n(g.away.score)}</div></div><div class="team"><div><div class="team-name">${esc(g.home.name)}<span class="record">${esc(record(g.home))}</span>${homePossession}</div>${state==='live'?teamScoreIndicators(g.scoreboardStatus?.home):''}</div><div class="score ${homeLead?'leading':''}">${n(g.home.score)}</div></div><div class="divider"></div><div class="analysis"><div class="analysis-cell"><div class="label">Live combined score</div><div class="value">${state==='upcoming'?'—':n(g.home.score)+n(g.away.score)}</div></div><div class="analysis-cell"><div class="label">Model projection</div><div class="value">${projectedTotal===null?'—':projectedTotal}</div></div><div class="analysis-cell"><div class="label">Model projected margin</div><div class="value">${esc(marginText)}</div></div><div class="analysis-cell"><div class="label">Estimated possessions remaining</div><div class="value">${hasPossessions?possessions:'—'}</div></div><div class="analysis-cell"><div class="label">Home / away PPP</div><div class="value">${ppp}</div></div></div>${liveFactorsPanel(g,model,g.foulContext)}${liveSignalPanel(g,model)}${tripleDipperPanel(g)}${teamTotalsPanel(g,model)}${teamHalfTotalsPanel(g,g.halfTeamTotals)}${scoreFlowChart(g)}</div></article>`
 }
 function render(){
   const active=document.activeElement;
@@ -579,7 +684,7 @@ function decorateGame(raw,key,historyRows=[]){
     scoringEvents,
     model:totalProjection
   });
-  const game={...raw,home,away,totalProjection,halfTeamTotals,scoringEvents,playEvents};
+  const game={...raw,league:key,home,away,totalProjection,halfTeamTotals,scoringEvents,playEvents};
   const foulContext=foulBonusContext(game);
   const liveContext=buildLiveContext({plays:playEvents,homeTeamId:home.id,awayTeamId:away.id,homeScore:home.score,awayScore:away.score,period:raw.period,clock:raw.clock,league:key});
   const scoreboardStatus=detail.scoreboard?buildScoreboardStatus({
@@ -600,6 +705,7 @@ function presentLeague(key){
   }
   leagueGames[key]=rawLeagueGames[key].map(raw=>decorateGame(raw,key,byEvent.get(String(raw.id))||[]));
   if(key===league)games=leagueGames[key];
+  if(key==='ncaa')checkTripleDipperAlerts(leagueGames.ncaa);
 }
 function maybeCaptureHistory(key){
   const now=Date.now();
@@ -607,7 +713,7 @@ function maybeCaptureHistory(key){
   captureHistory(leagueGames[key],key);
   lastHistoryCapture[key]=now;
 }
-function updateBoard(){metrics();render();}
+function updateBoard(){checkTripleDipperAlerts(leagueGames.ncaa);metrics();render();}
 async function refreshScoreboard(key,showBoard=false){
   if(scoreboardLoading[key])return;
   scoreboardLoading[key]=true;
@@ -694,6 +800,7 @@ document.querySelectorAll('.filter').forEach(b=>b.addEventListener('click',()=>{
   render();
 }));
 $('refreshButton').addEventListener('click',loadGames);
+$('tripleDipperAlertsButton').addEventListener('click',toggleTripleDipperAlerts);
 $('games').addEventListener('change',event=>{
   const input=event.target.closest('.live-line-input');
   if(!input)return;
@@ -711,6 +818,7 @@ $('games').addEventListener('change',event=>{
 });
 $('exportHistoryButton').addEventListener('click',exportHistory);
 updateHistoryStatus();
+restoreTripleDipperAlerts();
 startLiveRefresh();
 </script>
 </body>
