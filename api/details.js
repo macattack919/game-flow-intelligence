@@ -50,6 +50,13 @@ export default async function handler(req, res) {
       const number = Number(value);
       return Number.isFinite(number) ? number : null;
     };
+    const participants = Array.isArray(play.participants) ? play.participants.map(participant => ({
+      id: participant.athlete?.id || participant.id || null,
+      name: participant.athlete?.displayName || participant.athlete?.shortName ||
+        participant.displayName || participant.name || null,
+      role: participant.type?.text || participant.type?.name ||
+        participant.role || participant.type || ""
+    })) : [];
     return {
       sequence: numberOrNull(play.sequenceNumber ?? play.sequence),
       period: numberOrNull(play.period?.number) || 0,
@@ -58,9 +65,14 @@ export default async function handler(req, res) {
       awayScore: numberOrNull(play.awayScore),
       teamId: play.team?.id || null,
       teamName: play.team?.displayName || null,
+      possessionTeamId: play.possession?.team?.id || play.possession?.id ||
+        play.possession?.teamId || null,
       scoringPlay: !!play.scoringPlay,
       points: numberOrNull(play.scoreValue),
       type: play.type?.text || play.type?.name || null,
+      typeId: play.type?.id || null,
+      typeText: play.type?.text || play.type?.name || "",
+      participants,
       description: play.text || ""
     };
   }
