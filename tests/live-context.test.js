@@ -186,3 +186,14 @@ test("uses NCAA team-foul thresholds when the situation feed omits bonus state",
   assert.equal(result.home.bonus, "B");
   assert.equal(result.away.bonus, "DB");
 });
+
+test("uses ESPN fouls-to-give for NBA bonus status when bonusState is absent", () => {
+  const result = buildScoreboardStatus({
+    league: "nba",
+    period: 4,
+    home: { fouls: { foulsToGive: 0 } },
+    away: { fouls: { foulsToGive: 1 } }
+  });
+  assert.equal(result.home.bonus, "B");
+  assert.equal(result.away.bonus, null);
+});
