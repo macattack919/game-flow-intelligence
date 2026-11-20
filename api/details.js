@@ -65,8 +65,7 @@ export default async function handler(req, res) {
       awayScore: numberOrNull(play.awayScore),
       teamId: play.team?.id || null,
       teamName: play.team?.displayName || null,
-      possessionTeamId: play.possession?.team?.id || play.possession?.id ||
-        play.possession?.teamId || null,
+      possessionTeamId: play.possession?.team?.id || play.possession?.teamId || null,
       scoringPlay: !!play.scoringPlay,
       points: numberOrNull(play.scoreValue),
       type: play.type?.text || play.type?.name || null,
