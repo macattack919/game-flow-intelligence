@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { estimatePossessions, extractAdvancedBox, projectLiveTotal, evaluateLiveTotalSignal, projectHalfTeamTotals } from "../lib/total-model.js";
+import { estimatePossessions, extractAdvancedBox, projectLiveTotal, evaluateLiveTotalSignal, evaluateTripleDipperSignal, projectHalfTeamTotals } from "../lib/total-model.js";
 
 const homeStats = {
   "fieldGoalsMade-fieldGoalsAttempted": "18-40",
@@ -312,4 +312,46 @@ test("returns no half split when second-half play-by-play is not available", () 
     model: { possessionsPerMinute: 2, homePPP: 1.1, awayPPP: 1.0 }
   });
   assert.equal(halves, null);
+});
+
+
+test("fires Triple Dipper when every published NCAA condition is met", () => {
+  const signal = evaluateTripleDipperSignal({
+    league: "ncaa", state: "in", period: 2, regulationPeriods: 2,
+    elapsedMinutes: 24, remainingMinutes: 16,
+    homeScore: 45, awayScore: 33, liveLine: 160
+  });
+  assert.equal(signal.status, "TRIPLE_DIPPER_UNDER");
+  assert.equal(signal.direction, "UNDER");
+  assert.equal(signal.neededPpm, 5.13);
+  assert.equal(signal.actualPpm, 3.25);
+  assert.equal(signal.gapPpm, 1.88);
+});
+
+test("Triple Dipper excludes an 8-point lead, overtime, and time outside minutes 20–32", () => {
+  const base = {
+    league: "ncaa", state: "in", period: 2, regulationPeriods: 2,
+    elapsedMinutes: 24, remainingMinutes: 16, homeScore: 44, awayScore: 36, liveLine: 160
+  };
+  assert.equal(evaluateTripleDipperSignal(base).status, "CLOSE_GAME");
+  assert.equal(evaluateTripleDipperSignal({...base, homeScore: 45, awayScore: 33, period: 3}).status, "OVERTIME");
+  assert.equal(evaluateTripleDipperSignal({...base, homeScore: 45, awayScore: 33, elapsedMinutes: 32.1}).status, "OUTSIDE_WINDOW");
+});
+
+test("Triple Dipper requires both 4.7 needed points per minute and a 1.3 pace gap", () => {
+  const base = {
+    league: "ncaa", state: "in", period: 2, regulationPeriods: 2,
+    elapsedMinutes: 24, remainingMinutes: 16, homeScore: 48, awayScore: 30, liveLine: 165
+  };
+  assert.equal(evaluateTripleDipperSignal(base).status, "NO_SIGNAL");
+  assert.equal(evaluateTripleDipperSignal({...base, liveLine: 180}).status, "TRIPLE_DIPPER_UNDER");
+});
+
+test("Triple Dipper is NCAA-only and requires a manually entered live total", () => {
+  const base = {
+    league: "ncaa", state: "in", period: 2, regulationPeriods: 2,
+    elapsedMinutes: 24, remainingMinutes: 16, homeScore: 45, awayScore: 33
+  };
+  assert.equal(evaluateTripleDipperSignal({...base, league: "nba", liveLine: 160}).status, "UNSUPPORTED");
+  assert.equal(evaluateTripleDipperSignal(base).status, "NEEDS_LINE");
 });
