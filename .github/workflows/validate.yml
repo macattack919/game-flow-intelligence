@@ -23,6 +23,7 @@ jobs:
           node --check api/details.js
           node --check api/total-model.js
           node --check lib/total-model.js
+          node --check lib/live-context.js
       - name: Check dashboard JavaScript syntax
         run: |
           node <<'NODE'
