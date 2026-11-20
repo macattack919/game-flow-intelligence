@@ -91,13 +91,39 @@ export default async function handler(req, res) {
     return output;
   }
 
+  function numberOrNull(value) {
+    if (value === null || value === undefined || value === "") return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  function mapSituationTeam(timeouts, fouls) {
+    return {
+      timeouts: {
+        used: numberOrNull(timeouts?.timeoutsCurrent),
+        remaining: numberOrNull(timeouts?.timeoutsRemainingCurrent)
+      },
+      fouls: {
+        teamFouls: numberOrNull(fouls?.teamFouls),
+        teamFoulsCurrent: numberOrNull(fouls?.teamFoulsCurrent),
+        foulsToGive: numberOrNull(fouls?.foulsToGive),
+        bonusState: fouls?.bonusState ?? null
+      }
+    };
+  }
+
   try {
-    const summaries = await mapWithConcurrency(eventIds, 6, eventId =>
-      getJson(`${SITE_BASE}/summary?event=${encodeURIComponent(eventId)}`)
-    );
+    const gameData = await mapWithConcurrency(eventIds, 6, async eventId => {
+      const [summary, situation] = await Promise.all([
+        getJson(`${SITE_BASE}/summary?event=${encodeURIComponent(eventId)}`),
+        getJson(`https://sports.core.api.espn.com/v2/sports/basketball/leagues/${leagueKey}/events/${encodeURIComponent(eventId)}/competitions/${encodeURIComponent(eventId)}/situation?lang=en&region=us`).catch(() => null)
+      ]);
+      return { summary, situation };
+    });
     const details = {};
     eventIds.forEach((eventId, index) => {
-      const summary = summaries[index];
+      const summary = gameData[index]?.summary;
+      const situation = gameData[index]?.situation;
       if (!summary) return;
       const competitors = summary.header?.competitions?.[0]?.competitors ||
         summary.boxscore?.teams?.map(team => ({
@@ -111,6 +137,10 @@ export default async function handler(req, res) {
       details[eventId] = {
         homeStats: getTeamStats(summary, home?.id),
         awayStats: getTeamStats(summary, away?.id),
+        scoreboard: situation ? {
+          home: mapSituationTeam(situation.homeTimeouts, situation.homeFouls),
+          away: mapSituationTeam(situation.awayTimeouts, situation.awayFouls)
+        } : null,
         scoringEvents: plays.filter(play => play.scoringPlay).slice(-500),
         playEvents: plays.slice(-300),
         updated: new Date().toISOString()
