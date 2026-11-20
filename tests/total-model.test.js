@@ -341,7 +341,7 @@ test("Triple Dipper excludes an 8-point lead, overtime, and time outside minutes
 test("Triple Dipper requires both 4.7 needed points per minute and a 1.3 pace gap", () => {
   const base = {
     league: "ncaa", state: "in", period: 2, regulationPeriods: 2,
-    elapsedMinutes: 24, remainingMinutes: 16, homeScore: 48, awayScore: 30, liveLine: 165
+    elapsedMinutes: 24, remainingMinutes: 16, homeScore: 48, awayScore: 30, liveLine: 150
   };
   assert.equal(evaluateTripleDipperSignal(base).status, "NO_SIGNAL");
   assert.equal(evaluateTripleDipperSignal({...base, liveLine: 180}).status, "TRIPLE_DIPPER_UNDER");
