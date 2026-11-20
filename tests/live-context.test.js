@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildLiveContext } from "../lib/live-context.js";
+import { buildLiveContext, buildScoreboardStatus } from "../lib/live-context.js";
 
 test("marks a current timeout and clears it when an in-game action follows", () => {
   const timeout = buildLiveContext({
@@ -114,4 +114,75 @@ test("does not invent possession when the feed has no possession-changing event"
   });
   assert.equal(result.possession.teamId, null);
   assert.equal(result.possession.confidence, "unknown");
+});
+
+test("builds timeout dots from ESPN used and remaining timeout counts", () => {
+  const ncaa = buildScoreboardStatus({
+    league: "ncaa",
+    period: 2,
+    home: { timeouts: { used: 2, remaining: 2 }, fouls: {} },
+    away: { timeouts: { used: 4, remaining: 0 }, fouls: {} }
+  });
+  assert.deepEqual(ncaa.home.timeouts, { used: 2, remaining: 2, total: 4 });
+  assert.deepEqual(ncaa.away.timeouts, { used: 4, remaining: 0, total: 4 });
+
+  const nba = buildScoreboardStatus({
+    league: "nba",
+    period: 4,
+    home: { timeouts: { used: 3, remaining: 4 }, fouls: {} },
+    away: { timeouts: { used: 5, remaining: 2 }, fouls: {} }
+  });
+  assert.deepEqual(nba.home.timeouts, { used: 3, remaining: 4, total: 7 });
+  assert.deepEqual(nba.away.timeouts, { used: 5, remaining: 2, total: 7 });
+});
+
+test("expands NCAA timeout dots for overtime and accounts for non-media games with six", () => {
+  const result = buildScoreboardStatus({
+    league: "ncaa",
+    period: 4,
+    home: { timeouts: { used: 5, remaining: 2 }, fouls: {} },
+    away: { timeouts: { used: 0, remaining: 6 }, fouls: {} }
+  });
+  assert.equal(result.home.timeouts.total, 7);
+  assert.equal(result.away.timeouts.total, 7);
+
+  const overtime = buildScoreboardStatus({
+    league: "ncaa",
+    period: 3,
+    home: { timeouts: { used: 4, remaining: 1 }, fouls: {} },
+    away: { timeouts: { used: 0, remaining: 5 }, fouls: {} }
+  });
+  assert.equal(overtime.home.timeouts.total, 5);
+  assert.equal(overtime.away.timeouts.total, 5);
+});
+
+test("labels NCAA bonus and double bonus, and NBA penalty as B only", () => {
+  const ncaa = buildScoreboardStatus({
+    league: "ncaa",
+    period: 2,
+    home: { fouls: { bonusState: "BONUS" }, timeouts: { remaining: 3 } },
+    away: { fouls: { bonusState: "DOUBLE_BONUS" }, timeouts: { remaining: 3 } }
+  });
+  assert.equal(ncaa.home.bonus, "B");
+  assert.equal(ncaa.away.bonus, "DB");
+
+  const nba = buildScoreboardStatus({
+    league: "nba",
+    period: 4,
+    home: { fouls: { bonusState: "DOUBLE_BONUS" }, timeouts: { remaining: 2 } },
+    away: { fouls: { bonusState: "NO_BONUS" }, timeouts: { remaining: 2 } }
+  });
+  assert.equal(nba.home.bonus, "B");
+  assert.equal(nba.away.bonus, null);
+});
+
+test("uses NCAA team-foul thresholds when the situation feed omits bonus state", () => {
+  const result = buildScoreboardStatus({
+    league: "ncaa",
+    period: 2,
+    home: { fouls: { teamFoulsCurrent: 7 } },
+    away: { fouls: { teamFoulsCurrent: 10 } }
+  });
+  assert.equal(result.home.bonus, "B");
+  assert.equal(result.away.bonus, "DB");
 });
