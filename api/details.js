@@ -1,6 +1,6 @@
 const LEAGUES = {
-  nba: { sitePath: "nba" },
-  ncaa: { sitePath: "mens-college-basketball" }
+  nba: { sitePath: "nba", coreLeague: "nba" },
+  ncaa: { sitePath: "mens-college-basketball", coreLeague: "mens-college-basketball" }
 };
 
 export default async function handler(req, res) {
@@ -116,7 +116,7 @@ export default async function handler(req, res) {
     const gameData = await mapWithConcurrency(eventIds, 6, async eventId => {
       const [summary, situation] = await Promise.all([
         getJson(`${SITE_BASE}/summary?event=${encodeURIComponent(eventId)}`),
-        getJson(`https://sports.core.api.espn.com/v2/sports/basketball/leagues/${leagueKey}/events/${encodeURIComponent(eventId)}/competitions/${encodeURIComponent(eventId)}/situation?lang=en&region=us`).catch(() => null)
+        getJson(`https://sports.core.api.espn.com/v2/sports/basketball/leagues/${league.coreLeague}/events/${encodeURIComponent(eventId)}/competitions/${encodeURIComponent(eventId)}/situation?lang=en&region=us`).catch(() => null)
       ]);
       return { summary, situation };
     });
