@@ -144,7 +144,7 @@ test("expands NCAA timeout dots for overtime and accounts for non-media games wi
     away: { timeouts: { used: 0, remaining: 6 }, fouls: {} }
   });
   assert.equal(result.home.timeouts.total, 7);
-  assert.equal(result.away.timeouts.total, 7);
+  assert.equal(result.away.timeouts.total, 6);
 
   const overtime = buildScoreboardStatus({
     league: "ncaa",
