@@ -112,7 +112,7 @@
 <script type="module">
 import { projectLiveTotal, evaluateLiveTotalSignal, evaluateTripleDipperSignal, projectHalfTeamTotals } from '/lib/total-model.js';
 import { buildLiveContext, buildScoreboardStatus } from '/lib/live-context.js';
-const REFRESH_MS=5000;const DETAILS_REFRESH_MS=30000;const HISTORY_KEY='gfi_model_history_v1';const LIVE_LINES_KEY='gfi_manual_live_totals_v1';const MAX_HISTORY_ROWS=12000;const TRIPLE_ALERTS_KEY='gfi_triple_dipper_alerts_enabled_v1';const TRIPLE_ALERTED_KEY='gfi_triple_dipper_alerted_v1';let notificationRegistration=null;const pendingTripleAlerts=new Set();let league='ncaa',filter='all',games=[],liveLines={};
+const REFRESH_MS=5000;const DETAILS_REFRESH_MS=30000;const HISTORY_KEY='gfi_model_history_v1';const LIVE_LINES_KEY='gfi_manual_live_totals_v1';const MAX_HISTORY_ROWS=12000;const TRIPLE_ALERTS_KEY='gfi_triple_dipper_alerts_enabled_v1';const VAPID_PUBLIC_KEY='BC1lnYUxjC_TbFHAcrwpKgZj8CJ3VKtyHSqp-7NRASl9JW72HVEd3M29GZ9xJypE0eWKf4y8UPL_3noyqP2yKhQ';let notificationRegistration=null;let lastTripleDipperPushCheck=0;let tripleDipperPushCheckInFlight=false;let league='ncaa',filter='all',games=[],liveLines={};
 const rawLeagueGames={nba:[],ncaa:[]},leagueGames={nba:[],ncaa:[]};
 const detailCache={nba:{},ncaa:{}},lastDetailsFetch={nba:0,ncaa:0};
 const scoreboardLoading={nba:false,ncaa:false},detailsLoading={nba:false,ncaa:false};
@@ -123,18 +123,91 @@ function writeHistory(rows){try{localStorage.setItem(HISTORY_KEY,JSON.stringify(
 function readLiveLines(){try{const values=JSON.parse(localStorage.getItem(LIVE_LINES_KEY)||'{}');return values&&typeof values==='object'&&!Array.isArray(values)?values:{}}catch(e){console.warn('Saved live totals could not be read',e);return {}}}
 function saveLiveLines(){try{localStorage.setItem(LIVE_LINES_KEY,JSON.stringify(liveLines));return true}catch(e){console.warn('Live totals could not be saved',e);return false}}
 
-function readAlertedTripleDippers(){try{const values=JSON.parse(localStorage.getItem(TRIPLE_ALERTED_KEY)||'[]');return Array.isArray(values)?values:[]}catch(e){return []}}
-function saveAlertedTripleDippers(values){try{localStorage.setItem(TRIPLE_ALERTED_KEY,JSON.stringify(values.slice(-400)));}catch(e){console.warn('Triple Dipper alert history could not be saved',e)}}
+
 function updateTripleAlertControls(){
   const button=$('tripleDipperAlertsButton');if(!button)return;
-  const enabled=localStorage.getItem(TRIPLE_ALERTS_KEY)==='true'&&('Notification' in window)&&Notification.permission==='granted';
+  const enabled=localStorage.getItem(TRIPLE_ALERTS_KEY)==='true';
   button.textContent=enabled?'Disable Triple Dipper Alerts':'Enable Triple Dipper Alerts';
   button.classList.toggle('enabled',enabled);
-  $('alertStatus').textContent=enabled?'On · keep GFI open during games':'Alerts off';
+  $('alertStatus').textContent=enabled?'On · push subscription saved':'Alerts off';
 }
-function checkTripleDipperAlerts(ncaaGames){
-  if(localStorage.getItem(TRIPLE_ALERTS_KEY)!=='true'||!('Notification' in window)||Notification.permission!=='granted'||!notificationRegistration)return;
-  const alerted=new Set(readAlertedTripleDippers());
+function urlBase64ToUint8Array(base64String){
+  const padding='='.repeat((4-base64String.length%4)%4);
+  const base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');
+  const raw=window.atob(base64);
+  return Uint8Array.from([...raw].map(character=>character.charCodeAt(0)));
+}
+async function postPushSubscription(subscription){
+  const response=await fetch('/api/subscribe',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({subscription})
+  });
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.detail||data.error||'Could not save this device subscription.');
+  return data;
+}
+async function toggleTripleDipperAlerts(){
+  const enabled=localStorage.getItem(TRIPLE_ALERTS_KEY)==='true';
+  if(enabled){
+    try{
+      const registration=notificationRegistration||await navigator.serviceWorker.getRegistration();
+      const subscription=await registration?.pushManager?.getSubscription();
+      if(subscription){
+        await fetch('/api/unsubscribe',{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({endpoint:subscription.endpoint})
+        }).catch(error=>console.warn('Could not disable remote push subscription',error));
+        await subscription.unsubscribe().catch(()=>false);
+      }
+    }catch(error){console.warn('Could not unsubscribe this device',error)}
+    localStorage.removeItem(TRIPLE_ALERTS_KEY);
+    notificationRegistration=null;
+    updateTripleAlertControls();
+    return;
+  }
+
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  if(isIOS&&!standalone){
+    $('alertStatus').textContent='On iPhone: Share → Add to Home Screen, open the GFI icon, then enable alerts.';
+    return;
+  }
+  if(!window.isSecureContext||!('Notification' in window)||!('serviceWorker' in navigator)){
+    $('alertStatus').textContent='This browser does not support Web Push notifications.';
+    return;
+  }
+  try{
+    const permission=Notification.permission==='granted'?'granted':await Notification.requestPermission();
+    if(permission!=='granted'){$('alertStatus').textContent='Notification permission was not granted.';return;}
+    notificationRegistration=await navigator.serviceWorker.register('/service-worker.js');
+    await navigator.serviceWorker.ready;
+    let subscription=await notificationRegistration.pushManager.getSubscription();
+    if(!subscription){
+      subscription=await notificationRegistration.pushManager.subscribe({
+        userVisibleOnly:true,
+        applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+    await postPushSubscription(subscription);
+    localStorage.setItem(TRIPLE_ALERTS_KEY,'true');
+    updateTripleAlertControls();
+    await notificationRegistration.showNotification('GFI Triple Dipper alerts enabled',{
+      body:'This device is subscribed to GFI push alerts. Keep GFI open while live games are being monitored.',
+      tag:'gfi-triple-dipper-enabled'
+    });
+    checkTripleDipperAlerts(leagueGames.ncaa,true);
+  }catch(error){
+    console.warn('Triple Dipper Web Push setup failed',error);
+    $('alertStatus').textContent=error.message||'Could not enable push notifications.';
+  }
+}
+async function checkTripleDipperAlerts(ncaaGames,force=false){
+  if(localStorage.getItem(TRIPLE_ALERTS_KEY)!=='true'||!notificationRegistration||tripleDipperPushCheckInFlight)return;
+  const now=Date.now();
+  if(!force&&now-lastTripleDipperPushCheck<30000)return;
+  lastTripleDipperPushCheck=now;
+
+  const candidates=[];
   for(const g of (ncaaGames||[])){
     if(statusOf(g)!=='live')continue;
     const model=g.totalProjection||{};
@@ -145,57 +218,50 @@ function checkTripleDipperAlerts(ncaaGames){
       homeScore:g.home.score,awayScore:g.away.score,liveLine:line
     });
     if(signal.status!=='TRIPLE_DIPPER_UNDER')continue;
-    const key='ncaa:'+String(g.id);
-    if(alerted.has(key)||pendingTripleAlerts.has(key))continue;
-    pendingTripleAlerts.add(key);
-    const body=g.away.name+' '+n(g.away.score)+' · '+g.home.name+' '+n(g.home.score)+
-      ' | '+fmtPeriod(g)+' | Live total '+signal.liveLine+
-      ' | Needed '+signal.neededPpm.toFixed(2)+' PPM · pace '+signal.actualPpm.toFixed(2)+' PPM';
-    notificationRegistration.showNotification('TRIPLE DIPPER UNDER',{
-      body,tag:'gfi-'+key,requireInteraction:true,data:{url:'/'}
-    }).then(()=>{
-      alerted.add(key);saveAlertedTripleDippers([...alerted]);
-    }).catch(error=>console.warn('Triple Dipper notification could not be shown',error))
-      .finally(()=>pendingTripleAlerts.delete(key));
-  }
-}
-async function toggleTripleDipperAlerts(){
-  const enabled=localStorage.getItem(TRIPLE_ALERTS_KEY)==='true';
-  if(enabled){localStorage.removeItem(TRIPLE_ALERTS_KEY);updateTripleAlertControls();return;}
-  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-  const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
-  if(isIOS&&!standalone){
-    $('alertStatus').textContent='On iPhone: Share → Add to Home Screen, open the GFI icon, then enable alerts.';
-    return;
-  }
-  if(!window.isSecureContext||!('Notification' in window)||!('serviceWorker' in navigator)){
-    $('alertStatus').textContent='This browser does not support GFI browser alerts.';
-    return;
-  }
-  try{
-    const permission=Notification.permission==='granted'?'granted':await Notification.requestPermission();
-    if(permission!=='granted'){$('alertStatus').textContent='Notification permission was not granted.';return;}
-    notificationRegistration=await navigator.serviceWorker.register('/service-worker.js');
-    await navigator.serviceWorker.ready;
-    localStorage.setItem(TRIPLE_ALERTS_KEY,'true');
-    updateTripleAlertControls();
-    await notificationRegistration.showNotification('GFI Triple Dipper alerts enabled',{
-      body:'You will be notified when a live NCAA game meets every Triple Dipper condition.',
-      tag:'gfi-triple-dipper-enabled'
+    candidates.push({
+      eventId:String(g.id),name:g.shortName||g.name||g.away.name+' at '+g.home.name,
+      state:g.state,period:g.period,regulationPeriods:g.regulationPeriods,
+      elapsedMinutes:model.elapsedMinutes,remainingMinutes:model.remainingMinutes,
+      homeScore:n(g.home.score),awayScore:n(g.away.score),liveLine:Number(line),
+      neededPpm:signal.neededPpm,actualPpm:signal.actualPpm,gapPpm:signal.gapPpm,
+      clock:g.clock||''
     });
-    checkTripleDipperAlerts(leagueGames.ncaa);
+  }
+  if(!candidates.length)return;
+
+  tripleDipperPushCheckInFlight=true;
+  try{
+    const response=await fetch('/api/check-alerts',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({games:candidates})
+    });
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(data.detail||data.error||'Push alert check failed.');
+    if(Number(data.alertsSent)>0){
+      $('alertStatus').textContent='On · '+data.alertsSent+' Triple Dipper alert(s) sent';
+    }
   }catch(error){
-    console.warn('Triple Dipper alerts could not be enabled',error);
-    $('alertStatus').textContent='Could not enable alerts in this browser.';
+    console.warn('Triple Dipper push check failed',error);
+    $('alertStatus').textContent='On · push check unavailable';
+  }finally{
+    tripleDipperPushCheckInFlight=false;
   }
 }
-function restoreTripleDipperAlerts(){
+async function restoreTripleDipperAlerts(){
   updateTripleAlertControls();
-  if(localStorage.getItem(TRIPLE_ALERTS_KEY)==='true'&&('Notification' in window)&&Notification.permission==='granted'&&'serviceWorker' in navigator){
-    navigator.serviceWorker.register('/service-worker.js').then(registration=>{
-      notificationRegistration=registration;checkTripleDipperAlerts(leagueGames.ncaa);updateTripleAlertControls();
-    }).catch(error=>console.warn('Could not restore GFI alert service worker',error));
-  }
+  if(!('serviceWorker' in navigator))return;
+  try{
+    const registration=await navigator.serviceWorker.getRegistration();
+    const subscription=await registration?.pushManager?.getSubscription();
+    if(subscription&&Notification.permission==='granted'){
+      notificationRegistration=registration;
+      localStorage.setItem(TRIPLE_ALERTS_KEY,'true');
+      await postPushSubscription(subscription).catch(error=>console.warn('Could not refresh saved push subscription',error));
+    }else{
+      localStorage.removeItem(TRIPLE_ALERTS_KEY);
+    }
+  }catch(error){console.warn('Could not restore GFI push subscription',error)}
+  updateTripleAlertControls();
 }
 
 function liveLineKey(g,key=league){return `${key}:${g.id}`}
