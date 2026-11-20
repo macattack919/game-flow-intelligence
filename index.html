@@ -220,7 +220,7 @@ async function checkTripleDipperAlerts(ncaaGames,force=false){
     if(signal.status!=='TRIPLE_DIPPER_UNDER')continue;
     candidates.push({
       eventId:String(g.id),name:g.shortName||g.name||g.away.name+' at '+g.home.name,
-      state:g.state,period:g.period,regulationPeriods:g.regulationPeriods,
+      awayName:g.away.name,homeName:g.home.name,state:g.state,period:g.period,regulationPeriods:g.regulationPeriods,
       elapsedMinutes:model.elapsedMinutes,remainingMinutes:model.remainingMinutes,
       homeScore:n(g.home.score),awayScore:n(g.away.score),liveLine:Number(line),
       neededPpm:signal.neededPpm,actualPpm:signal.actualPpm,gapPpm:signal.gapPpm,
