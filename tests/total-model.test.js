@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { estimatePossessions, extractAdvancedBox, projectLiveTotal, evaluateLiveTotalSignal, evaluateTripleDipperSignal, projectHalfTeamTotals } from "../lib/total-model.js";
+import { estimatePossessions, extractAdvancedBox, projectLiveTotal, evaluateLiveTotalSignal, evaluateTripleDipperSignal, evaluateLateGameOverPotential, projectHalfTeamTotals } from "../lib/total-model.js";
 
 const homeStats = {
   "fieldGoalsMade-fieldGoalsAttempted": "18-40",
@@ -354,4 +354,84 @@ test("Triple Dipper is NCAA-only and requires a manually entered live total", ()
   };
   assert.equal(evaluateTripleDipperSignal({...base, league: "nba", liveLine: 160}).status, "UNSUPPORTED");
   assert.equal(evaluateTripleDipperSignal(base).status, "NEEDS_LINE");
+});
+
+test("identifies a strong NCAA late-foul Over potential when the leader has the ball and is in the bonus", () => {
+  const potential = evaluateLateGameOverPotential({
+    league: "ncaa",
+    state: "in",
+    period: 2,
+    regulationPeriods: 2,
+    remainingMinutes: 1.2,
+    homeScore: 71,
+    awayScore: 67,
+    homeTeamId: "home",
+    awayTeamId: "away",
+    possessionTeamId: "home",
+    homeOffense: { label: "DOUBLE BONUS", tone: "up" }
+  });
+  assert.equal(potential.status, "HIGH");
+  assert.equal(potential.qualified, true);
+  assert.equal(potential.leaderSide, "home");
+  assert.equal(potential.leaderHasPossession, true);
+  assert.equal(potential.leaderDoubleBonus, true);
+});
+
+test("shows a late-game watch for a close NCAA finish before strong foul conditions are confirmed", () => {
+  const potential = evaluateLateGameOverPotential({
+    league: "ncaa",
+    state: "in",
+    period: 2,
+    regulationPeriods: 2,
+    remainingMinutes: 2.4,
+    homeScore: 68,
+    awayScore: 61,
+    homeTeamId: "home",
+    awayTeamId: "away"
+  });
+  assert.equal(potential.status, "WATCH");
+  assert.equal(potential.qualified, true);
+});
+
+test("does not flag late-foul Over potential in blowouts, early game, or NBA games", () => {
+  const base = {
+    league: "ncaa", state: "in", period: 2, regulationPeriods: 2,
+    remainingMinutes: 1.2, homeScore: 80, awayScore: 65
+  };
+  assert.equal(evaluateLateGameOverPotential(base).status, "NOT_CLOSE");
+  assert.equal(evaluateLateGameOverPotential({ ...base, homeScore: 71, awayScore: 67, remainingMinutes: 3.1 }).status, "TOO_EARLY");
+  assert.equal(evaluateLateGameOverPotential({ ...base, league: "nba" }).status, "UNSUPPORTED");
+});
+
+test("allows a late-game Over signal only when the late-foul setup is qualified and the model edge remains positive", () => {
+  const lateGameOverPotential = { qualified: true, reason: "The leader has possession and is in the double bonus." };
+  const strong = evaluateLiveTotalSignal({
+    projection: { total: 150, method: "possessions_efficiency", elapsedMinutes: 38.8 },
+    liveLine: 142,
+    remainingMinutes: 1.2,
+    scoreMargin: 4,
+    lateGameOverPotential
+  });
+  assert.equal(strong.status, "OVER_WINDOW");
+  assert.equal(strong.direction, "OVER");
+  assert.match(strong.label, /LATE FOUL/);
+
+  const watch = evaluateLiveTotalSignal({
+    projection: { total: 147, method: "possessions_efficiency", elapsedMinutes: 38.8 },
+    liveLine: 142,
+    remainingMinutes: 1.2,
+    scoreMargin: 4,
+    lateGameOverPotential
+  });
+  assert.equal(watch.status, "WATCH_OVER");
+
+  const noEdge = evaluateLiveTotalSignal({
+    projection: { total: 143, method: "possessions_efficiency", elapsedMinutes: 38.8 },
+    liveLine: 142,
+    remainingMinutes: 1.2,
+    scoreMargin: 4,
+    lateGameOverPotential
+  });
+  assert.equal(noEdge.status, "LATE_FOUL_POTENTIAL");
+  assert.equal(noEdge.direction, null);
 });
