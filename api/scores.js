@@ -60,7 +60,7 @@ export default async function handler(req, res) {
       const away = competitors.find(team => team.homeAway === "away");
       const mapTeam = item => ({
         id: item?.team?.id || null,
-        name: item?.team?.displayName || "Team",
+        name: item?.team?.location || item?.team?.shortDisplayName || item?.team?.displayName || "Team",
         abbreviation: item?.team?.abbreviation || "",
         score: Number(item?.score || 0),
         color: item?.team?.color || null,
@@ -72,7 +72,7 @@ export default async function handler(req, res) {
       return {
         id: event.id,
         name: event.name,
-        shortName: event.shortName || event.name,
+        shortName: `${away?.team?.location || away?.team?.shortDisplayName || away?.team?.displayName || "Away"} at ${home?.team?.location || home?.team?.shortDisplayName || home?.team?.displayName || "Home"}`,
         date: event.date,
         status: event.status?.type?.description || "",
         state: event.status?.type?.state || "",
